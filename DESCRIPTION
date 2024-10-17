@@ -13,7 +13,7 @@ Description:
     The package draws inspiration from V. Candila's work on 
     the "welo" package, utilizing useful functions from it 
     to enhance its functionality.
-Imports:
+Depends:
     welo
     Rlab
 License: MIT
