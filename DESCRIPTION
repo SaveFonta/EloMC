@@ -1,0 +1,21 @@
+Package: EloMC
+Type: Package
+Title: Elo Rating System for Tennis Betting
+Version: 0.1.0
+Author: Saverio Fontana
+Maintainer: Saverio Fontana <yourself@somewhere.net>
+Description: 
+    This package implements a comprehensive framework for 
+    analyzing tennis betting results using an Elo rating 
+    system. It provides functions for simulating tournaments, 
+    calculating betting outcomes, and evaluating performance 
+    metrics such as return on investment (ROI). 
+    The package draws inspiration from V. Candila's work on 
+    the "welo" package, utilizing useful functions from it 
+    to enhance its functionality.
+Imports:
+    welo
+    Rlab
+License: MIT
+Encoding: UTF-8
+LazyData: true
