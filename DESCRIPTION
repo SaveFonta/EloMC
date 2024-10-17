@@ -12,10 +12,7 @@ Description:
     metrics such as return on investment (ROI). 
     The package draws inspiration from V. Candila's work on 
     the "welo" package, utilizing useful functions from it 
-    to enhance its functionality.
-Depends:
-    welo
-    Rlab
+    to enhance its functionality. Ensure the packages "welo" and "Rlab" are installed
 License: MIT
 Encoding: UTF-8
 LazyData: true
