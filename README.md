@@ -99,7 +99,7 @@ bet_list <- Results_betting(Table, Excel_name = "Database Tennis.xlsx", n = 1000
 
 # Visualize the total betting results 
 balance <- Results_balance(bet_list)
-
+```
 
 ## Contributing
 The package draws inspiration from V. Candila's work on the "welo" package, utilizing useful functions from it to enhance its functionality. 
