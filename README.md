@@ -25,7 +25,7 @@ To obtain betting odds, visit the [Tennis Scraping GitHub Repository](https://gi
   - [Betting_function](#betting_function)
   - [Results_betting](#results_betting)
   - [Results_balance](#results_balance)
-- [Examples](#examples)
+- [Examples](#example)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -68,7 +68,38 @@ remotes::install_github("SaveFonta/EloMC")
 #### 'Results_betting'
 #### 'Results_balance'
 
-## Examples
+## Example
+This section provides an example of how to use the **EloMC** library for simulating tennis results and analyzing betting opportunities.
+
+```R
+# Download tennis data for ATP players 
+X <- merged_tennis_data()
+
+# Clean the data frame
+X.clean <- clean_data(X)
+
+# Fit the Standard Elo
+X.clean.fit <- compute_elo(X.clean)
+Table <- X.clean.fit$results
+
+# Set the seed for reproducibility (optional)
+# set.seed()
+
+# Define the ordered tables of the Australian Open 2024
+AO24 <- define_tournament(Table, start_date = "2024-01-14")
+
+# Simulate the AO2024 starting from the round of 128 100000 times
+round_of_128 <- AO24$sessantaquattresimi_ord
+sim_results <- simulate_tournament(round_of_128, sim = 100000)
+
+# BETTING:
+# Obtain betting results and simulate Grand Slams from 2019 to 2024, simulating 100000 times each tournament.
+# Ensure the correct Excel name and path are specified
+bet_list <- Results_betting(Table, Excel_name = "Database Tennis.xlsx", n = 100000)
+
+# Visualize the total betting results 
+balance <- Results_balance(bet_list)
+
 
 ## Contributing
 The package draws inspiration from V. Candila's work on the "welo" package, utilizing useful functions from it to enhance its functionality. 
