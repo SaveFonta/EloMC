@@ -29,7 +29,9 @@ The function follows these steps:
 This function is designed to handle the output from \code{\link{merged_tennis_data}}, ensuring compatibility for Elo rating calculations with \code{\link{compute_elo}} and other related functions.
 }
 \references{
-Angelini, Giovanni, Vincenzo Candila, and Luca De Angelis. "Weighted Elo rating for tennis match predictions." \emph{European Journal of Operational Research} 297.1 (2022): 120-132. \url{https://doi.org/10.1016/j.ejor.2021.05.024}
+Angelini, Giovanni, Vincenzo Candila, and Luca De Angelis. "Weighted Elo rating for tennis match predictions." \emph{European Journal of Operational Research} 297.1 (2022): 120-132. \cr
+ \url{https://github.com/SaveFonta}
+
 }
 \author{
 Saverio Fontana
@@ -38,7 +40,8 @@ Saverio Fontana
 The function is crucial for preparing tennis match data for Elo and WElo rating computations. If any required columns are missing, the function will halt and display an error message.
 }
 \seealso{
-\code{\link{compute_elo}}, \code{\link{merged_tennis_data}}
+\code{\link{compute_elo}}, \cr
+\code{\link{merged_tennis_data}}
 }
 \examples{
 # Example usage:

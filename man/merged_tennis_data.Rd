@@ -2,7 +2,7 @@
 \alias{merged_tennis_data}
 \title{Merge Tennis Match Data from Multiple Years}
 \description{
-  The \code{merged_tennis_data} function retrieves and merges ATP or WTA tennis match datasets from the years 2013 to 2024 based on the specified gender. It ensures that the \code{welo} package is installed and removes unnecessary columns for streamlined data analysis.
+  The \code{merged_tennis_data} function retrieves and merges ATP or WTA tennis match datasets from the years 2013 to 2024 based on the specified gender. The matches are downloaded from the archive of \url{www.tennis-data.co.uk} and involves match data for: ATP250, ATP500, ATP1000 and Grand Slams.
 }
 \usage{
   merged_tennis_data(gender = "ATP")
@@ -49,7 +49,7 @@
   A data frame containing the merged ATP or WTA tennis match data from 2013 to 2024, with specific columns removed.
 }
 \references{
-  Angelini, Giovanni, Vincenzo Candila, and Luca De Angelis. "Weighted Elo rating for tennis match predictions." \emph{European Journal of Operational Research} 297.1 (2022): 120-132.
+ \url{https://github.com/SaveFonta}
 }
 \author{
   Saverio Fontana
@@ -58,7 +58,7 @@
   This function is essential for preparing tennis match data for analysis and computation of Elo ratings.
 }
 \seealso{
-  \code{\link[welo]{tennis_data}}  % Link to the tennis_data function in the welo package
+  \code{\link[welo]{tennis_data}} \cr % Link to the tennis_data function in the welo package
   \code{\link{clean_data}}  % Link to the clean_data function
 }
 \examples{

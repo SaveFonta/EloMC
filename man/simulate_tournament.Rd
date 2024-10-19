@@ -1,81 +1,93 @@
 \name{simulate_tournament}
 \alias{simulate_tournament}
-\title{Simulate Tennis Tournament Outcomes Based on ELO or WELO Ratings}
+\title{Simulate Single-Elimination Tennis Tournament Outcomes Using ELO or WELO Ratings}
 \description{
-The \code{simulate_tournament} function simulates a single-elimination tennis tournament using either ELO or WELO ratings for the players. The simulation runs for a specified number of rounds and is repeated across multiple iterations to estimate each player’s probability of reaching various tournament stages, including the round of 64, round of 32, round of 16, quarterfinals, semifinals, and finals.
+  The \code{simulate_tournament} function simulates outcomes for a single-elimination tennis tournament based on players' ELO or WELO ratings. The simulations are repeated \code{sim} times, to estimate each player's probabilities of reaching different stages, such as the round of 64, round of 32, quarterfinals, semifinals, and finals.
 }
 \usage{
 simulate_tournament(X, sim = 10000, WELO = FALSE)
 }
 \arguments{
   \item{X}{
-    A data frame or matrix representing the tournament matchups. It should contain at least six columns:
-    \enumerate{
-      \item Names of Player 1 for each matchup.
-      \item Names of Player 2 for each matchup.
-      \item ELO or WELO rating of Player 1.
-      \item ELO or WELO rating of Player 2.
-      \item Number of previous wins for Player 1.
-      \item Number of previous wins for Player 2.
-    }
-    The number of rows in \code{X} should correspond to the number of initial matchups in the tournament (typically 64 or 32).
-  }
+    A data frame with the ordered table (ensuring the correct matchups) to start the simulation process. NOTE this is obtained using the function \code{\link{define_tournament}}.}
 
   \item{sim}{
-    A numeric value specifying the number of tournament simulations to perform. The default is \code{10000}.
+    A numeric value specifying the number of simulations to run. The default is \code{10000}.
   }
 
   \item{WELO}{
-    A logical value indicating whether to use the WELO rating system. If \code{TRUE}, WELO ratings are used for match simulations; if \code{FALSE}, standard ELO ratings are employed. The default is \code{FALSE}.
+    A logical value indicating whether to use the WELO rating system. If \code{TRUE}, WELO ratings are used; if \code{FALSE}, standard ELO ratings are used. The default is \code{FALSE}.
   }
 }
 \details{
-The \code{simulate_tournament} function performs a full tournament simulation in a single-elimination format, using either ELO or WELO ratings to determine match outcomes. For each match, the winner is determined using a Bernoulli distribution, where the probability of Player 1 winning is calculated based on their ELO or WELO rating relative to their opponent's.
+  The \code{simulate_tournament} function simulates a tennis tournament where match outcomes are determined based on ELO or WELO ratings. Each match's result is drawn from a Bernoulli(p) distribution, where p is the probability that player i will win against player j in a match at time t and is computed as follows:
 
-After each match, winners advance to the next round, and player ratings are updated based on performance, influencing their chances in subsequent rounds. The function executes \code{sim} simulations and aggregates outcomes to estimate the probability of each player advancing through the tournament stages: round of 64, round of 32, round of 16, quarterfinals, semifinals, finals, and winning the tournament. These probabilities provide insights into player performance across numerous tournament scenarios.
+\deqn{\hat{p}_{i,j}(t) = \frac{1}{1 + 10^{(E_j(t) - E_i(t))/400}}}
+
+The Elo rating for player i is then updated based on match results:
+
+\deqn{E_i(t + 1) = E_i(t) + K_i(t) \left [W_i(t) - \hat{p}_{i,j}(t)\right]}
+
+Where:
+\itemize{
+  \item W_i(t): Binary indicator (1 if player i wins, 0 otherwise).
+  \item K_i(t): Constant factor determining the magnitude of rating adjustments, which can vary based on match significance or surface type.
 }
 
+
+
+The function performs \code{sim} simulations, updating player ratings after each match. After all simulations are complete, the probabilities for each player advancing to various stages (round of 64, 32, quarterfinals, semifinals, finals) and winning the tournament are estimated.
+
+  This approach helps estimate how likely each player is to advance through the tournament and provides insights into player performance under various scenarios.
+}
 \value{
-A list containing the estimated probabilities for each player reaching various stages of the tournament across all simulations:
-  \item{prob.64}{Probabilities of each player advancing past the round of 64.}
-  \item{prob.32}{Probabilities of each player advancing past the round of 32.}
-  \item{prob.16}{Probabilities of each player advancing past the round of 16.}
-  \item{prob.8}{Probabilities of each player advancing to the quarterfinals.}
-  \item{prob.4}{Probabilities of each player advancing to the semifinals.}
-  \item{prob.2}{Probabilities of each player reaching the finals.}
-  \item{prob.1}{Probabilities of each player winning the tournament.}
+  A list containing estimated probabilities for each player advancing through different tournament stages:
+  \itemize{
+    \item{\code{prob.64}:}{Probability of advancing past the round of 64.}
+    \item{\code{prob.32}:}{Probability of advancing past the round of 32.}
+    \item{\code{prob.16}:}{Probability of advancing past the round of 16.}
+    \item{\code{prob.8}:}{Probability of advancing to the quarterfinals.}
+    \item{\code{prob.4}:}{Probability of advancing to the semifinals.}
+    \item{\code{prob.2}:}{Probability of reaching the finals.}
+    \item{\code{prob.1}:}{Probability of winning the tournament.}
+  }
 }
+\references{
+Elo, A. E. (1978). \emph{The Rating of Chess Players, Past and Present}. \cr
+Kovalchik, S. A. (2016). Searching for the GOAT of tennis win prediction. \emph{Journal of Quantitative Analysis in Sports}, 12(3), 127-138. \cr
+Angelini, G., Candila, V., & De Angelis, L. (2022). Weighted Elo rating for tennis match predictions. \emph{European Journal of Operational Research}, 297(1), 120-132.s \cr
+\url{https://github.com/SaveFonta}
+}
+
+\seealso{
+  \code{\link{define_tournament}}\cr
+  \code{\link{clean_data}}\cr
+  \code{\link{compute_elo}} \cr
+  \code{\link{tennis_prob}}
+}
+\author{
+Saverio Fontana
+}
+
 \examples{
 # Example: Simulating a 64-player tournament using the output from define_tournament
-# Assume cleaned_data is the result of clean_data() function
 
 start_date <- "2023-01-16"
 Serie <- "Grand Slam"
-result <- define_tournament(cleaned_data, start_date, Serie, WELO = TRUE)
+result <- define_tournament(fit, start_date, Serie, WELO = TRUE)
 
+# Extract the ordered table for the Round of 128
 round_of_128 <- result$sessantaquattresimi_ord
 
-# Simulating tournament outcomes with ELO ratings
+# Simulate tournament outcomes using ELO ratings
 simulate_tournament(round_of_128, sim = 10000, WELO = FALSE)
 
-# Example using the WELO rating system
+# Simulate tournament outcomes using WELO ratings
 tournament_results_welo <- simulate_tournament(round_of_128, sim = 10000, WELO = TRUE)
-
-}
-\seealso{
-  \itemize{
-    \item \code{\link{define_tournament}}: Create tournament matchups based on player ratings.
-    \item \code{\link{clean_data}}: Clean and preprocess tennis match data for analysis.
-    \item \code{\link{compute_elo}}: Compute Elo ratings for players based on match results.
-    \item \code{\link{tennis_prob}}: Calculate the probability of winning for given player ratings.
-  }
-}
-
-\author{
-Saverio Fontana
 }
 \keyword{simulation}
 \keyword{ELO}
 \keyword{WELO}
 \keyword{tennis}
 \keyword{tournament}
+

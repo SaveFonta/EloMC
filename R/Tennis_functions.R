@@ -1131,8 +1131,7 @@ riga_4 <- which(quarti$player_i.4 == semifinali$player_j.2[2] | quarti$player_j.
   L'output sarà un oggetto formato dalle varie tabelle di probabilità di arrivare a un certo punto
   del torneo"
 
-
-simulate_tournament <- function(X, sim =  10000) {
+simulate_tournament <- function(X, sim =  10000, WELO = FALSE) {
 
   n <- nrow(X)
 
@@ -1146,43 +1145,78 @@ simulate_tournament <- function(X, sim =  10000) {
 
   #  startiamo i vettori per i 64esimi
   p.64 <- numeric(64)
-  elo_winner.64 <- numeric(64)
+
+  if (WELO){
+    welo_winner.64 <- numeric(64)
+  } else {
+    elo_winner.64 <- numeric(64)
+  }
+
   n_winner.64 <- numeric(64)
   winner.64 <- numeric(64)
 
   #  #startiamo i vettori per i 32esimi
   p.32<-numeric(32)
-  elo_winner.32 <- numeric(32)
+  if (WELO){
+    welo_winner.32 <- numeric(32)
+  } else {
+    elo_winner.32 <- numeric(32)
+  }
+
   n_winner.32 <- numeric(32)
   winner.32 <- numeric(32)
 
   #startiamo i valori per i 16esimi
   p.16<-numeric(16)
-  elo_winner.16<- numeric(16)
+
+  if (WELO){
+    welo_winner.16 <- numeric(16)
+  } else {
+    elo_winner.16<- numeric(16)
+  }
+
   n_winner.16 <- numeric(16)
   winner.16 <- numeric(16)
 
   #startiamo i valori per i ottavi
   p.8<-numeric(8)
-  elo_winner.8<- numeric(8)
+
+  if (WELO){
+    welo_winner.8 <- numeric(8)
+  } else {
+    elo_winner.8<- numeric(8)
+  }
   n_winner.8 <- numeric(8)
   winner.8 <- numeric(8)
 
   #startiamo i valori per i quarti
   p.4<-numeric(4)
-  elo_winner.4<- numeric(4)
+
+  if (WELO){
+    welo_winner.4 <- numeric(4)
+  } else {
+    elo_winner.4<- numeric(4)
+  }
   n_winner.4 <- numeric(4)
   winner.4 <- numeric(4)
 
   #startiamo i valori per semi
   p.2<-numeric(2)
-  elo_winner.2<- numeric(2)
+  if (WELO){
+    welo_winner.2 <- numeric(2)
+  } else {
+    elo_winner.2<- numeric(2)
+  }
   n_winner.2 <- numeric(2)
   winner.2 <- numeric(2)
 
   #startiamo i valori per finale
   p.1<-numeric(1)
-  elo_winner.1<- numeric(1)
+  if (WELO){
+    welo_winner.1 <- numeric(1)
+  } else {
+    elo_winner.1<- numeric(1)
+  }
   n_winner.1 <- numeric(1)
   winner.1 <- numeric(1)
 
@@ -1199,61 +1233,151 @@ simulate_tournament <- function(X, sim =  10000) {
 
       p.64 <- sapply(1:64, function (x) tennis_prob(X[x,3], X[x,4]))
       match_result.64 <- rbern (64, p.64)
-      elo_winner.64<-ifelse(match_result.64 ==1, X[,3], X[,4])
+
+      if (WELO){
+        welo_winner.64 <- ifelse(match_result.64 ==1, X[,3], X[,4])
+      } else {
+        elo_winner.64<-ifelse(match_result.64 ==1, X[,3], X[,4])}
+
       n_winner.64 <- ifelse(match_result.64 == 1, X[,5] + 1, X[,6] + 1)
-      elo_winner.64 <- elo_winner.64 + ((250/((n_winner.64 + 5)^0.4)) * (ifelse(match_result.64 == 1, 1 - p.64, p.64)))
+
+      if (WELO){
+        welo_winner.64 <- welo_winner.64 + ((250/((n_winner.64 + 5)^0.4)) * (ifelse(match_result.64 == 1, 1 - p.64, p.64)))
+      } else {
+        elo_winner.64 <- elo_winner.64 + ((250/((n_winner.64 + 5)^0.4)) * (ifelse(match_result.64 == 1, 1 - p.64, p.64)))
+      }
+
       winner.64 <- ifelse(match_result.64 == 1, X[, 1], X[, 2])
       table.64[t, ] <- winner.64
 
 
-      p.32 <- sapply(1:32, function (f) tennis_prob(elo_winner.64[f*2-1], elo_winner.64[f*2]))
+
+
+
+      if (WELO){
+        p.32 <- sapply(1:32, function (f) tennis_prob(welo_winner.64[f*2-1], welo_winner.64[f*2]))
+      } else {
+        p.32 <- sapply(1:32, function (f) tennis_prob(elo_winner.64[f*2-1], elo_winner.64[f*2]))}
+
       match_result.32 <- rbern (32, p.32)
-      elo_winner.32 <- ifelse(match_result.32 == 1, elo_winner.64[seq(1, 64, by = 2)], elo_winner.64[seq(2, 64, by = 2)])
+
+      if (WELO){
+        welo_winner.32 <- ifelse(match_result.32 == 1, welo_winner.64[seq(1, 64, by = 2)], welo_winner.64[seq(2, 64, by = 2)])
+      } else {
+        elo_winner.32 <- ifelse(match_result.32 == 1, elo_winner.64[seq(1, 64, by = 2)], elo_winner.64[seq(2, 64, by = 2)])
+      }
       n_winner.32 <- ifelse(match_result.32 == 1, n_winner.64[seq(1, 64, by = 2)] + 1, n_winner.64[seq(2, 64, by = 2)] + 1)
-      elo_winner.32 <- elo_winner.32 + ((250/((n_winner.32 + 5)^0.4)) * (ifelse(match_result.32 == 1, 1 - p.32, p.32)))
+
+      if (WELO){
+        welo_winner.32 <- welo_winner.32 + ((250/((n_winner.32 + 5)^0.4)) * (ifelse(match_result.32 == 1, 1 - p.32, p.32)))
+      } else {
+        elo_winner.32 <- elo_winner.32 + ((250/((n_winner.32 + 5)^0.4)) * (ifelse(match_result.32 == 1, 1 - p.32, p.32)))
+      }
       winner.32 <- ifelse(match_result.32 == 1, winner.64[seq(1, 64, by = 2)], winner.64[seq(2, 64, by = 2)])
       table.32[t, ] <- winner.32
 
-      p.16 <- sapply(1:16, function (g) tennis_prob(elo_winner.32[g*2-1], elo_winner.32[g*2]))
+
+
+
+
+
+      if (WELO){
+        p.16 <- sapply(1:16, function (g) tennis_prob(welo_winner.32[g*2-1], welo_winner.32[g*2]))
+      } else {
+        p.16 <- sapply(1:16, function (g) tennis_prob(elo_winner.32[g*2-1], elo_winner.32[g*2]))
+      }
+
       match_result.16 <- rbern (16, p.16)
-      elo_winner.16 <- ifelse(match_result.16 == 1, elo_winner.32[seq(1, 32, by = 2)], elo_winner.32[seq(2, 32, by = 2)])
-      n_winner.16 <- ifelse(match_result.16 == 1, n_winner.32[seq(1, 32, by = 2)] + 1, n_winner.32[seq(2, 32, by = 2)] + 1)
-      elo_winner.16 <- elo_winner.16 + ((250/((n_winner.16 + 5)^0.4)) * (ifelse(match_result.16 == 1, 1 - p.16, p.16)))
+
+      if (WELO){
+        welo_winner.16 <- ifelse(match_result.16 == 1, welo_winner.32[seq(1, 32, by = 2)], welo_winner.32[seq(2, 32, by = 2)])
+      } else {
+        elo_winner.16 <- ifelse(match_result.16 == 1, elo_winner.32[seq(1, 32, by = 2)], elo_winner.32[seq(2, 32, by = 2)])
+      }
+
+      n_winner.16 <- ifelse(match_result.16 == 1, n_winner.32[seq(1, 32, by = 2)] + 1, n_winner.32[seq(2, 32, by = 2)] + 1) #tipo qua se vuoi fare qualcosa di utile dovresti mettere +2 perche si ipotizza che il 32 sia gia stato giocato?
+
+      if (WELO){
+        welo_winner.16 <- welo_winner.16 + ((250/((n_winner.16 + 5)^0.4)) * (ifelse(match_result.16 == 1, 1 - p.16, p.16)))
+      } else {
+        elo_winner.16 <- elo_winner.16 + ((250/((n_winner.16 + 5)^0.4)) * (ifelse(match_result.16 == 1, 1 - p.16, p.16)))
+      }
+
       winner.16 <- ifelse(match_result.16 == 1, winner.32[seq(1, 32, by = 2)], winner.32[seq(2, 32, by = 2)])
       table.16[t, ] <- winner.16
 
 
-      p.8 <- sapply(1:8, function (m) tennis_prob(elo_winner.16[m*2-1], elo_winner.16[m*2]))
+
+
+      if (WELO){
+        p.8 <- sapply(1:8, function (m) tennis_prob(welo_winner.16[m*2-1], welo_winner.16[m*2]))
+      } else {
+        p.8 <- sapply(1:8, function (m) tennis_prob(elo_winner.16[m*2-1], elo_winner.16[m*2]))
+      }
       match_result.8 <- rbern (8, p.8)
-      elo_winner.8 <- ifelse(match_result.8 == 1, elo_winner.16[seq(1, 16, by = 2)], elo_winner.16[seq(2, 16, by = 2)])
+      if (WELO){
+        welo_winner.8 <- ifelse(match_result.8 == 1, welo_winner.16[seq(1, 16, by = 2)], welo_winner.16[seq(2, 16, by = 2)])
+      } else {
+        elo_winner.8 <- ifelse(match_result.8 == 1, elo_winner.16[seq(1, 16, by = 2)], elo_winner.16[seq(2, 16, by = 2)])
+      }
       n_winner.8 <- ifelse(match_result.8 == 1, n_winner.16[seq(1, 16, by = 2)] + 1, n_winner.16[seq(2, 16, by = 2)] + 1)
-      elo_winner.8 <- elo_winner.8 + ((250/((n_winner.8 + 5)^0.4)) * (ifelse(match_result.8 == 1, 1 - p.8, p.8)))
+      if (WELO){
+        welo_winner.8 <- welo_winner.8 + ((250/((n_winner.8 + 5)^0.4)) * (ifelse(match_result.8 == 1, 1 - p.8, p.8)))
+      } else {
+        elo_winner.8 <- elo_winner.8 + ((250/((n_winner.8 + 5)^0.4)) * (ifelse(match_result.8 == 1, 1 - p.8, p.8)))}
       winner.8 <- ifelse(match_result.8 == 1, winner.16[seq(1, 16, by = 2)], winner.16[seq(2, 16, by = 2)])
       table.8[t, ] <- winner.8
 
-      p.4 <- sapply(1:4, function (c) tennis_prob(elo_winner.8[c*2-1], elo_winner.8[c*2]))
+      if (WELO){
+        p.4 <- sapply(1:4, function (c) tennis_prob(welo_winner.8[c*2-1], welo_winner.8[c*2]))
+      } else {
+        p.4 <- sapply(1:4, function (c) tennis_prob(elo_winner.8[c*2-1], elo_winner.8[c*2]))}
       match_result.4 <- rbern (4, p.4)
-      elo_winner.4 <- ifelse(match_result.4 == 1, elo_winner.8[seq(1, 8, by = 2)], elo_winner.8[seq(2, 8, by = 2)])
+      if (WELO){
+        welo_winner.4 <- ifelse(match_result.4 == 1, welo_winner.8[seq(1, 8, by = 2)], welo_winner.8[seq(2, 8, by = 2)])
+      } else {
+        elo_winner.4 <- ifelse(match_result.4 == 1, elo_winner.8[seq(1, 8, by = 2)], elo_winner.8[seq(2, 8, by = 2)])
+      }
       n_winner.4 <- ifelse(match_result.4 == 1, n_winner.8[seq(1, 8, by = 2)] + 1, n_winner.8[seq(2, 8, by = 2)] + 1)
-      elo_winner.4 <- elo_winner.4 + ((250/((n_winner.4 + 5)^0.4)) * (ifelse(match_result.4 == 1, 1 - p.4, p.4)))
+      if (WELO){
+        welo_winner.4 <- welo_winner.4 + ((250/((n_winner.4 + 5)^0.4)) * (ifelse(match_result.4 == 1, 1 - p.4, p.4)))
+      } else {
+        elo_winner.4 <- elo_winner.4 + ((250/((n_winner.4 + 5)^0.4)) * (ifelse(match_result.4 == 1, 1 - p.4, p.4)))}
       winner.4 <- ifelse(match_result.4 == 1, winner.8[seq(1, 8, by = 2)], winner.8[seq(2, 8, by = 2)])
       table.4[t, ] <- winner.4
 
-      p.2 <- sapply(1:2, function (b) tennis_prob(elo_winner.4[b*2-1], elo_winner.4[b*2]))
+      if (WELO){
+        p.2 <- sapply(1:2, function (b) tennis_prob(welo_winner.4[b*2-1], welo_winner.4[b*2]))
+      } else {
+        p.2 <- sapply(1:2, function (b) tennis_prob(elo_winner.4[b*2-1], elo_winner.4[b*2]))}
       match_result.2 <- rbern (2, p.2)
-      elo_winner.2 <- ifelse(match_result.2 == 1, elo_winner.4[seq(1, 4, by = 2)], elo_winner.4[seq(2, 4, by = 2)])
+      if (WELO){
+        welo_winner.2 <- ifelse(match_result.2 == 1, welo_winner.4[seq(1, 4, by = 2)], welo_winner.4[seq(2, 4, by = 2)])
+      } else {
+        elo_winner.2 <- ifelse(match_result.2 == 1, elo_winner.4[seq(1, 4, by = 2)], elo_winner.4[seq(2, 4, by = 2)])}
       n_winner.2 <- ifelse(match_result.2 == 1, n_winner.4[seq(1, 4, by = 2)] + 1, n_winner.4[seq(2, 4, by = 2)] + 1)
-      elo_winner.2 <- elo_winner.2 + ((250/((n_winner.2 + 5)^0.2)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))
+      if (WELO){
+        welo_winner.2 <- welo_winner.2 + ((250/((n_winner.2 + 5)^0.4)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))
+      } else {
+        elo_winner.2 <- elo_winner.2 + ((250/((n_winner.2 + 5)^0.2)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))}
       winner.2 <- ifelse(match_result.2 == 1, winner.4[seq(1, 4, by = 2)], winner.4[seq(2, 4, by = 2)])
       table.2[t, ] <- winner.2
 
 
-
-      p.1 <- tennis_prob(elo_winner.2[1], elo_winner.2[2])
+      if (WELO){
+        p.1 <- tennis_prob(welo_winner.2[1], welo_winner.2[2])
+      } else {
+        p.1 <- tennis_prob(elo_winner.2[1], elo_winner.2[2])}
       match_result.1 <- rbern(1, p.1)
-      elo_winner.1 <- if (match_result.1 == 1) elo_winner.2[1] else  elo_winner.2[2]
+      if (WELO){
+        welo_winner.1 <- if (match_result.1 == 1) welo_winner.2[1] else  welo_winner.2[2]
+      } else {
+        elo_winner.1 <- if (match_result.1 == 1) elo_winner.2[1] else  elo_winner.2[2] }
       n_winner.1 <- if (match_result.1 == 1)  n_winner.2[1] + 1 else n_winner.2[2] + 1
-      elo_winner.1 <- elo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1)))
+      if (WELO){
+        welo_winner.1 <- welo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1)))
+      } else {
+        elo_winner.1 <- elo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1))) }
       winner.1 <- if (match_result.1 == 1) winner.2[1] else winner.2[2]
       table.1[t, 1] <- winner.1
 
@@ -1284,128 +1408,119 @@ simulate_tournament <- function(X, sim =  10000) {
       pb$tick() # Aggiorna la barra di avanzamento
       p.32 <- sapply(1:32, function (f) tennis_prob(X[f,3], X[f,4]))
       match_result.32 <- rbern (32, p.32)
-      elo_winner.32 <- ifelse(match_result.32 == 1, X[,3], X[,4])
+      if (WELO){
+        welo_winner.32 <- ifelse(match_result.32 ==1, X[,3], X[,4])
+      } else {
+        elo_winner.32 <- ifelse(match_result.32 == 1, X[,3], X[,4])    }
       n_winner.32 <- ifelse(match_result.32 == 1,  X[,5] + 1, X[,6] + 1)
-      elo_winner.32 <- elo_winner.32 + ((250/((n_winner.32 + 5)^0.4)) * (ifelse(match_result.32 == 1, 1 - p.32, p.32)))
+      if (WELO){
+        welo_winner.32 <- welo_winner.32 + ((250/((n_winner.32 + 5)^0.4)) * (ifelse(match_result.32 == 1, 1 - p.32, p.32)))
+      } else {
+        elo_winner.32 <- elo_winner.32 + ((250/((n_winner.32 + 5)^0.4)) * (ifelse(match_result.32 == 1, 1 - p.32, p.32)))}
       winner.32 <- ifelse(match_result.32 == 1, X[, 1], X[, 2])
       table.32[t, ] <- winner.32
 
-      p.16 <- sapply(1:16, function (g) tennis_prob(elo_winner.32[g*2-1], elo_winner.32[g*2]))
+
+
+      if (WELO){
+        p.16 <- sapply(1:16, function (g) tennis_prob(welo_winner.32[g*2-1], welo_winner.32[g*2]))
+      } else {
+        p.16 <- sapply(1:16, function (g) tennis_prob(elo_winner.32[g*2-1], elo_winner.32[g*2]))
+      }
+
       match_result.16 <- rbern (16, p.16)
-      elo_winner.16 <- ifelse(match_result.16 == 1, elo_winner.32[seq(1, 32, by = 2)], elo_winner.32[seq(2, 32, by = 2)])
+
+      if (WELO){
+        welo_winner.16 <- ifelse(match_result.16 == 1, welo_winner.32[seq(1, 32, by = 2)], welo_winner.32[seq(2, 32, by = 2)])
+      } else {
+        elo_winner.16 <- ifelse(match_result.16 == 1, elo_winner.32[seq(1, 32, by = 2)], elo_winner.32[seq(2, 32, by = 2)])
+      }
+
       n_winner.16 <- ifelse(match_result.16 == 1, n_winner.32[seq(1, 32, by = 2)] + 1, n_winner.32[seq(2, 32, by = 2)] + 1)
-      elo_winner.16 <- elo_winner.16 + ((250/((n_winner.16 + 5)^0.4)) * (ifelse(match_result.16 == 1, 1 - p.16, p.16)))
+
+      if (WELO){
+        welo_winner.16 <- welo_winner.16 + ((250/((n_winner.16 + 5)^0.4)) * (ifelse(match_result.16 == 1, 1 - p.16, p.16)))
+      } else {
+        elo_winner.16 <- elo_winner.16 + ((250/((n_winner.16 + 5)^0.4)) * (ifelse(match_result.16 == 1, 1 - p.16, p.16)))
+      }
+
       winner.16 <- ifelse(match_result.16 == 1, winner.32[seq(1, 32, by = 2)], winner.32[seq(2, 32, by = 2)])
       table.16[t, ] <- winner.16
 
 
-      p.8 <- sapply(1:8, function (m) tennis_prob(elo_winner.16[m*2-1], elo_winner.16[m*2]))
+
+
+      if (WELO){
+        p.8 <- sapply(1:8, function (m) tennis_prob(welo_winner.16[m*2-1], welo_winner.16[m*2]))
+      } else {
+        p.8 <- sapply(1:8, function (m) tennis_prob(elo_winner.16[m*2-1], elo_winner.16[m*2]))
+      }
       match_result.8 <- rbern (8, p.8)
-      elo_winner.8 <- ifelse(match_result.8 == 1, elo_winner.16[seq(1, 16, by = 2)], elo_winner.16[seq(2, 16, by = 2)])
+      if (WELO){
+        welo_winner.8 <- ifelse(match_result.8 == 1, welo_winner.16[seq(1, 16, by = 2)], welo_winner.16[seq(2, 16, by = 2)])
+      } else {
+        elo_winner.8 <- ifelse(match_result.8 == 1, elo_winner.16[seq(1, 16, by = 2)], elo_winner.16[seq(2, 16, by = 2)])
+      }
       n_winner.8 <- ifelse(match_result.8 == 1, n_winner.16[seq(1, 16, by = 2)] + 1, n_winner.16[seq(2, 16, by = 2)] + 1)
-      elo_winner.8 <- elo_winner.8 + ((250/((n_winner.8 + 5)^0.4)) * (ifelse(match_result.8 == 1, 1 - p.8, p.8)))
+      if (WELO){
+        welo_winner.8 <- welo_winner.8 + ((250/((n_winner.8 + 5)^0.4)) * (ifelse(match_result.8 == 1, 1 - p.8, p.8)))
+      } else {
+        elo_winner.8 <- elo_winner.8 + ((250/((n_winner.8 + 5)^0.4)) * (ifelse(match_result.8 == 1, 1 - p.8, p.8)))}
       winner.8 <- ifelse(match_result.8 == 1, winner.16[seq(1, 16, by = 2)], winner.16[seq(2, 16, by = 2)])
       table.8[t, ] <- winner.8
 
-      p.4 <- sapply(1:4, function (c) tennis_prob(elo_winner.8[c*2-1], elo_winner.8[c*2]))
+      if (WELO){
+        p.4 <- sapply(1:4, function (c) tennis_prob(welo_winner.8[c*2-1], welo_winner.8[c*2]))
+      } else {
+        p.4 <- sapply(1:4, function (c) tennis_prob(elo_winner.8[c*2-1], elo_winner.8[c*2]))}
       match_result.4 <- rbern (4, p.4)
-      elo_winner.4 <- ifelse(match_result.4 == 1, elo_winner.8[seq(1, 8, by = 2)], elo_winner.8[seq(2, 8, by = 2)])
+      if (WELO){
+        welo_winner.4 <- ifelse(match_result.4 == 1, welo_winner.8[seq(1, 8, by = 2)], welo_winner.8[seq(2, 8, by = 2)])
+      } else {
+        elo_winner.4 <- ifelse(match_result.4 == 1, elo_winner.8[seq(1, 8, by = 2)], elo_winner.8[seq(2, 8, by = 2)])
+      }
       n_winner.4 <- ifelse(match_result.4 == 1, n_winner.8[seq(1, 8, by = 2)] + 1, n_winner.8[seq(2, 8, by = 2)] + 1)
-      elo_winner.4 <- elo_winner.4 + ((250/((n_winner.4 + 5)^0.4)) * (ifelse(match_result.4 == 1, 1 - p.4, p.4)))
+      if (WELO){
+        welo_winner.4 <- welo_winner.4 + ((250/((n_winner.4 + 5)^0.4)) * (ifelse(match_result.4 == 1, 1 - p.4, p.4)))
+      } else {
+        elo_winner.4 <- elo_winner.4 + ((250/((n_winner.4 + 5)^0.4)) * (ifelse(match_result.4 == 1, 1 - p.4, p.4)))}
       winner.4 <- ifelse(match_result.4 == 1, winner.8[seq(1, 8, by = 2)], winner.8[seq(2, 8, by = 2)])
       table.4[t, ] <- winner.4
 
-      p.2 <- sapply(1:2, function (b) tennis_prob(elo_winner.4[b*2-1], elo_winner.4[b*2]))
+      if (WELO){
+        p.2 <- sapply(1:2, function (b) tennis_prob(welo_winner.4[b*2-1], welo_winner.4[b*2]))
+      } else {
+        p.2 <- sapply(1:2, function (b) tennis_prob(elo_winner.4[b*2-1], elo_winner.4[b*2]))}
       match_result.2 <- rbern (2, p.2)
-      elo_winner.2 <- ifelse(match_result.2 == 1, elo_winner.4[seq(1, 4, by = 2)], elo_winner.4[seq(2, 4, by = 2)])
+      if (WELO){
+        welo_winner.2 <- ifelse(match_result.2 == 1, welo_winner.4[seq(1, 4, by = 2)], welo_winner.4[seq(2, 4, by = 2)])
+      } else {
+        elo_winner.2 <- ifelse(match_result.2 == 1, elo_winner.4[seq(1, 4, by = 2)], elo_winner.4[seq(2, 4, by = 2)])}
       n_winner.2 <- ifelse(match_result.2 == 1, n_winner.4[seq(1, 4, by = 2)] + 1, n_winner.4[seq(2, 4, by = 2)] + 1)
-      elo_winner.2 <- elo_winner.2 + ((250/((n_winner.2 + 5)^0.2)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))
+      if (WELO){
+        welo_winner.2 <- welo_winner.2 + ((250/((n_winner.2 + 5)^0.4)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))
+      } else {
+        elo_winner.2 <- elo_winner.2 + ((250/((n_winner.2 + 5)^0.2)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))}
       winner.2 <- ifelse(match_result.2 == 1, winner.4[seq(1, 4, by = 2)], winner.4[seq(2, 4, by = 2)])
       table.2[t, ] <- winner.2
 
 
-
-      p.1 <- tennis_prob(elo_winner.2[1], elo_winner.2[2])
+      if (WELO){
+        p.1 <- tennis_prob(welo_winner.2[1], welo_winner.2[2])
+      } else {
+        p.1 <- tennis_prob(elo_winner.2[1], elo_winner.2[2])}
       match_result.1 <- rbern(1, p.1)
-      elo_winner.1 <- if (match_result.1 == 1) elo_winner.2[1] else  elo_winner.2[2]
+      if (WELO){
+        welo_winner.1 <- if (match_result.1 == 1) welo_winner.2[1] else  welo_winner.2[2]
+      } else {
+        elo_winner.1 <- if (match_result.1 == 1) elo_winner.2[1] else  elo_winner.2[2] }
       n_winner.1 <- if (match_result.1 == 1)  n_winner.2[1] + 1 else n_winner.2[2] + 1
-      elo_winner.1 <- elo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1)))
+      if (WELO){
+        welo_winner.1 <- welo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1)))
+      } else {
+        elo_winner.1 <- elo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1))) }
       winner.1 <- if (match_result.1 == 1) winner.2[1] else winner.2[2]
       table.1[t, 1] <- winner.1
-
-
-    }
-
-    prob.32 <- table(table.32) / sim
-    prob.16 <- table(table.16) / sim
-    prob.8 <- table(table.8) / sim
-    prob.4 <- table(table.4) / sim
-    prob.2 <- table(table.2) / sim
-    prob.1 <- table(table.1) / sim
-
-    prob.32 <- sort(prob.32, decreasing = TRUE)
-    prob.16 <- sort(prob.16, decreasing = TRUE)
-    prob.8 <- sort(prob.8, decreasing = TRUE)
-    prob.4 <- sort(prob.4, decreasing = TRUE)
-    prob.2 <- sort(prob.2, decreasing = TRUE)
-    prob.1 <- sort(prob.1, decreasing = TRUE)
-
-    return(list(prob.32 = prob.32, prob.16 = prob.16, prob.8 = prob.8, prob.4 = prob.4, prob.2 = prob.2, prob.1 = prob.1))
-  }
-
-
-
-  else if (n == 16){
-    for (t in 1:sim) {
-
-      pb$tick() # Aggiorna la barra di avanzamento
-
-
-
-      p.16 <- sapply(1:16, function (g) tennis_prob(X[g,3], X[g,4]))
-      match_result.16 <- rbern (16, p.16)
-      elo_winner.16 <- ifelse(match_result.16 == 1, X[,3], X[,4])
-      n_winner.16 <- ifelse(match_result.16 == 1,  X[,5] + 1, X[,6] + 1)
-      elo_winner.16 <- elo_winner.16 + ((250/((n_winner.16 + 5)^0.4)) * (ifelse(match_result.16 == 1, 1 - p.16, p.16)))
-      winner.16 <- ifelse(match_result.16 == 1, X[, 1], X[, 2])
-      table.16[t, ] <- winner.16
-
-
-      p.8 <- sapply(1:8, function (m) tennis_prob(elo_winner.16[m*2-1], elo_winner.16[m*2]))
-      match_result.8 <- rbern (8, p.8)
-      elo_winner.8 <- ifelse(match_result.8 == 1, elo_winner.16[seq(1, 16, by = 2)], elo_winner.16[seq(2, 16, by = 2)])
-      n_winner.8 <- ifelse(match_result.8 == 1, n_winner.16[seq(1, 16, by = 2)] + 1, n_winner.16[seq(2, 16, by = 2)] + 1)
-      elo_winner.8 <- elo_winner.8 + ((250/((n_winner.8 + 5)^0.4)) * (ifelse(match_result.8 == 1, 1 - p.8, p.8)))
-      winner.8 <- ifelse(match_result.8 == 1, winner.16[seq(1, 16, by = 2)], winner.16[seq(2, 16, by = 2)])
-      table.8[t, ] <- winner.8
-
-      p.4 <- sapply(1:4, function (c) tennis_prob(elo_winner.8[c*2-1], elo_winner.8[c*2]))
-      match_result.4 <- rbern (4, p.4)
-      elo_winner.4 <- ifelse(match_result.4 == 1, elo_winner.8[seq(1, 8, by = 2)], elo_winner.8[seq(2, 8, by = 2)])
-      n_winner.4 <- ifelse(match_result.4 == 1, n_winner.8[seq(1, 8, by = 2)] + 1, n_winner.8[seq(2, 8, by = 2)] + 1)
-      elo_winner.4 <- elo_winner.4 + ((250/((n_winner.4 + 5)^0.4)) * (ifelse(match_result.4 == 1, 1 - p.4, p.4)))
-      winner.4 <- ifelse(match_result.4 == 1, winner.8[seq(1, 8, by = 2)], winner.8[seq(2, 8, by = 2)])
-      table.4[t, ] <- winner.4
-
-      p.2 <- sapply(1:2, function (b) tennis_prob(elo_winner.4[b*2-1], elo_winner.4[b*2]))
-      match_result.2 <- rbern (2, p.2)
-      elo_winner.2 <- ifelse(match_result.2 == 1, elo_winner.4[seq(1, 4, by = 2)], elo_winner.4[seq(2, 4, by = 2)])
-      n_winner.2 <- ifelse(match_result.2 == 1, n_winner.4[seq(1, 4, by = 2)] + 1, n_winner.4[seq(2, 4, by = 2)] + 1)
-      elo_winner.2 <- elo_winner.2 + ((250/((n_winner.2 + 5)^0.2)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))
-      winner.2 <- ifelse(match_result.2 == 1, winner.4[seq(1, 4, by = 2)], winner.4[seq(2, 4, by = 2)])
-      table.2[t, ] <- winner.2
-
-
-
-      p.1 <- tennis_prob(elo_winner.2[1], elo_winner.2[2])
-      match_result.1 <- rbern(1, p.1)
-      elo_winner.1 <- if (match_result.1 == 1) elo_winner.2[1] else  elo_winner.2[2]
-      n_winner.1 <- if (match_result.1 == 1)  n_winner.2[1] + 1 else n_winner.2[2] + 1
-      elo_winner.1 <- elo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1)))
-      winner.1 <- if (match_result.1 == 1) winner.2[1] else winner.2[2]
-      table.1[t, 1] <- winner.1
-
-
     }
 
     prob.16 <- table(table.16) / sim
@@ -1423,6 +1538,110 @@ simulate_tournament <- function(X, sim =  10000) {
     return(list(prob.16 = prob.16, prob.8 = prob.8, prob.4 = prob.4, prob.2 = prob.2, prob.1 = prob.1))
   }
 
+  else if (n == 16){
+    for (t in 1:sim) {
+
+      pb$tick() # Aggiorna la barra di avanzamento
+      p.16 <- sapply(1:16, function (j) tennis_prob(X[j,3], X[j,4]))
+      match_result.16 <- rbern (16, p.16)
+      if (WELO){
+        welo_winner.16 <- ifelse(match_result.16 ==1, X[,3], X[,4])
+      } else {
+        elo_winner.16 <- ifelse(match_result.16 == 1, X[,3], X[,4])    }
+      n_winner.16 <- ifelse(match_result.16 == 1,  X[,5] + 1, X[,6] + 1)
+      if (WELO){
+        welo_winner.16 <- welo_winner.16 + ((250/((n_winner.16 + 5)^0.4)) * (ifelse(match_result.16 == 1, 1 - p.16, p.16)))
+      } else {
+        elo_winner.16 <- elo_winner.16 + ((250/((n_winner.16 + 5)^0.4)) * (ifelse(match_result.16 == 1, 1 - p.16, p.16)))}
+      winner.16 <- ifelse(match_result.16 == 1, X[, 1], X[, 2])
+      table.16[t, ] <- winner.16
+
+      if (WELO){
+        p.8 <- sapply(1:8, function (m) tennis_prob(welo_winner.16[m*2-1], welo_winner.16[m*2]))
+      } else {
+        p.8 <- sapply(1:8, function (m) tennis_prob(elo_winner.16[m*2-1], elo_winner.16[m*2]))
+      }
+      match_result.8 <- rbern (8, p.8)
+      if (WELO){
+        welo_winner.8 <- ifelse(match_result.8 == 1, welo_winner.16[seq(1, 16, by = 2)], welo_winner.16[seq(2, 16, by = 2)])
+      } else {
+        elo_winner.8 <- ifelse(match_result.8 == 1, elo_winner.16[seq(1, 16, by = 2)], elo_winner.16[seq(2, 16, by = 2)])
+      }
+      n_winner.8 <- ifelse(match_result.8 == 1, n_winner.16[seq(1, 16, by = 2)] + 1, n_winner.16[seq(2, 16, by = 2)] + 1)
+      if (WELO){
+        welo_winner.8 <- welo_winner.8 + ((250/((n_winner.8 + 5)^0.4)) * (ifelse(match_result.8 == 1, 1 - p.8, p.8)))
+      } else {
+        elo_winner.8 <- elo_winner.8 + ((250/((n_winner.8 + 5)^0.4)) * (ifelse(match_result.8 == 1, 1 - p.8, p.8)))}
+      winner.8 <- ifelse(match_result.8 == 1, winner.16[seq(1, 16, by = 2)], winner.16[seq(2, 16, by = 2)])
+      table.8[t, ] <- winner.8
+
+      if (WELO){
+        p.4 <- sapply(1:4, function (c) tennis_prob(welo_winner.8[c*2-1], welo_winner.8[c*2]))
+      } else {
+        p.4 <- sapply(1:4, function (c) tennis_prob(elo_winner.8[c*2-1], elo_winner.8[c*2]))}
+      match_result.4 <- rbern (4, p.4)
+      if (WELO){
+        welo_winner.4 <- ifelse(match_result.4 == 1, welo_winner.8[seq(1, 8, by = 2)], welo_winner.8[seq(2, 8, by = 2)])
+      } else {
+        elo_winner.4 <- ifelse(match_result.4 == 1, elo_winner.8[seq(1, 8, by = 2)], elo_winner.8[seq(2, 8, by = 2)])
+      }
+      n_winner.4 <- ifelse(match_result.4 == 1, n_winner.8[seq(1, 8, by = 2)] + 1, n_winner.8[seq(2, 8, by = 2)] + 1)
+      if (WELO){
+        welo_winner.4 <- welo_winner.4 + ((250/((n_winner.4 + 5)^0.4)) * (ifelse(match_result.4 == 1, 1 - p.4, p.4)))
+      } else {
+        elo_winner.4 <- elo_winner.4 + ((250/((n_winner.4 + 5)^0.4)) * (ifelse(match_result.4 == 1, 1 - p.4, p.4)))}
+      winner.4 <- ifelse(match_result.4 == 1, winner.8[seq(1, 8, by = 2)], winner.8[seq(2, 8, by = 2)])
+      table.4[t, ] <- winner.4
+
+      if (WELO){
+        p.2 <- sapply(1:2, function (b) tennis_prob(welo_winner.4[b*2-1], welo_winner.4[b*2]))
+      } else {
+        p.2 <- sapply(1:2, function (b) tennis_prob(elo_winner.4[b*2-1], elo_winner.4[b*2]))}
+      match_result.2 <- rbern (2, p.2)
+      if (WELO){
+        welo_winner.2 <- ifelse(match_result.2 == 1, welo_winner.4[seq(1, 4, by = 2)], welo_winner.4[seq(2, 4, by = 2)])
+      } else {
+        elo_winner.2 <- ifelse(match_result.2 == 1, elo_winner.4[seq(1, 4, by = 2)], elo_winner.4[seq(2, 4, by = 2)])}
+      n_winner.2 <- ifelse(match_result.2 == 1, n_winner.4[seq(1, 4, by = 2)] + 1, n_winner.4[seq(2, 4, by = 2)] + 1)
+      if (WELO){
+        welo_winner.2 <- welo_winner.2 + ((250/((n_winner.2 + 5)^0.4)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))
+      } else {
+        elo_winner.2 <- elo_winner.2 + ((250/((n_winner.2 + 5)^0.2)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))}
+      winner.2 <- ifelse(match_result.2 == 1, winner.4[seq(1, 4, by = 2)], winner.4[seq(2, 4, by = 2)])
+      table.2[t, ] <- winner.2
+
+
+      if (WELO){
+        p.1 <- tennis_prob(welo_winner.2[1], welo_winner.2[2])
+      } else {
+        p.1 <- tennis_prob(elo_winner.2[1], elo_winner.2[2])}
+      match_result.1 <- rbern(1, p.1)
+      if (WELO){
+        welo_winner.1 <- if (match_result.1 == 1) welo_winner.2[1] else  welo_winner.2[2]
+      } else {
+        elo_winner.1 <- if (match_result.1 == 1) elo_winner.2[1] else  elo_winner.2[2] }
+      n_winner.1 <- if (match_result.1 == 1)  n_winner.2[1] + 1 else n_winner.2[2] + 1
+      if (WELO){
+        welo_winner.1 <- welo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1)))
+      } else {
+        elo_winner.1 <- elo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1))) }
+      winner.1 <- if (match_result.1 == 1) winner.2[1] else winner.2[2]
+      table.1[t, 1] <- winner.1
+    }
+
+    prob.8 <- table(table.8) / sim
+    prob.4 <- table(table.4) / sim
+    prob.2 <- table(table.2) / sim
+    prob.1 <- table(table.1) / sim
+
+    prob.8 <- sort(prob.8, decreasing = TRUE)
+    prob.4 <- sort(prob.4, decreasing = TRUE)
+    prob.2 <- sort(prob.2, decreasing = TRUE)
+    prob.1 <- sort(prob.1, decreasing = TRUE)
+
+    return(list(prob.8 = prob.8, prob.4 = prob.4, prob.2 = prob.2, prob.1 = prob.1))
+  }
+
   else if (n == 8){
     for (t in 1:sim) {
 
@@ -1430,39 +1649,70 @@ simulate_tournament <- function(X, sim =  10000) {
 
       p.8 <- sapply(1:8, function (m)  tennis_prob(X[m,3], X[m,4]))
       match_result.8 <- rbern (8, p.8)
-      elo_winner.8 <- ifelse(match_result.8 == 1, X[,3], X[,4])
+      if (WELO){
+        welo_winner.8 <- ifelse(match_result.8 == 1, X[,3], X[,4])
+      } else {
+        elo_winner.8 <- ifelse(match_result.8 == 1, X[,3], X[,4]) }
       n_winner.8 <- ifelse(match_result.8 == 1, X[,5] + 1, X[,6] + 1)
-      elo_winner.8 <- elo_winner.8 + ((250/((n_winner.8 + 5)^0.4)) * (ifelse(match_result.8 == 1, 1 - p.8, p.8)))
+      if (WELO){
+        welo_winner.8 <- welo_winner.8 + ((250/((n_winner.8 + 5)^0.4)) * (ifelse(match_result.8 == 1, 1 - p.8, p.8)))
+      } else {
+        elo_winner.8 <- elo_winner.8 + ((250/((n_winner.8 + 5)^0.4)) * (ifelse(match_result.8 == 1, 1 - p.8, p.8)))}
       winner.8 <- ifelse(match_result.8 == 1, X[, 1], X[, 2])
       table.8[t, ] <- winner.8
 
-      p.4 <- sapply(1:4, function (c) tennis_prob(elo_winner.8[c*2-1], elo_winner.8[c*2]))
+      if (WELO){
+        p.4 <- sapply(1:4, function (c) tennis_prob(welo_winner.8[c*2-1], welo_winner.8[c*2]))
+      } else {
+        p.4 <- sapply(1:4, function (c) tennis_prob(elo_winner.8[c*2-1], elo_winner.8[c*2]))}
       match_result.4 <- rbern (4, p.4)
-      elo_winner.4 <- ifelse(match_result.4 == 1, elo_winner.8[seq(1, 8, by = 2)], elo_winner.8[seq(2, 8, by = 2)])
+      if (WELO){
+        welo_winner.4 <- ifelse(match_result.4 == 1, welo_winner.8[seq(1, 8, by = 2)], welo_winner.8[seq(2, 8, by = 2)])
+      } else {
+        elo_winner.4 <- ifelse(match_result.4 == 1, elo_winner.8[seq(1, 8, by = 2)], elo_winner.8[seq(2, 8, by = 2)])
+      }
       n_winner.4 <- ifelse(match_result.4 == 1, n_winner.8[seq(1, 8, by = 2)] + 1, n_winner.8[seq(2, 8, by = 2)] + 1)
-      elo_winner.4 <- elo_winner.4 + ((250/((n_winner.4 + 5)^0.4)) * (ifelse(match_result.4 == 1, 1 - p.4, p.4)))
+      if (WELO){
+        welo_winner.4 <- welo_winner.4 + ((250/((n_winner.4 + 5)^0.4)) * (ifelse(match_result.4 == 1, 1 - p.4, p.4)))
+      } else {
+        elo_winner.4 <- elo_winner.4 + ((250/((n_winner.4 + 5)^0.4)) * (ifelse(match_result.4 == 1, 1 - p.4, p.4)))}
       winner.4 <- ifelse(match_result.4 == 1, winner.8[seq(1, 8, by = 2)], winner.8[seq(2, 8, by = 2)])
       table.4[t, ] <- winner.4
 
-      p.2 <- sapply(1:2, function (b) tennis_prob(elo_winner.4[b*2-1], elo_winner.4[b*2]))
+      if (WELO){
+        p.2 <- sapply(1:2, function (b) tennis_prob(welo_winner.4[b*2-1], welo_winner.4[b*2]))
+      } else {
+        p.2 <- sapply(1:2, function (b) tennis_prob(elo_winner.4[b*2-1], elo_winner.4[b*2]))}
       match_result.2 <- rbern (2, p.2)
-      elo_winner.2 <- ifelse(match_result.2 == 1, elo_winner.4[seq(1, 4, by = 2)], elo_winner.4[seq(2, 4, by = 2)])
+      if (WELO){
+        welo_winner.2 <- ifelse(match_result.2 == 1, welo_winner.4[seq(1, 4, by = 2)], welo_winner.4[seq(2, 4, by = 2)])
+      } else {
+        elo_winner.2 <- ifelse(match_result.2 == 1, elo_winner.4[seq(1, 4, by = 2)], elo_winner.4[seq(2, 4, by = 2)])}
       n_winner.2 <- ifelse(match_result.2 == 1, n_winner.4[seq(1, 4, by = 2)] + 1, n_winner.4[seq(2, 4, by = 2)] + 1)
-      elo_winner.2 <- elo_winner.2 + ((250/((n_winner.2 + 5)^0.2)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))
+      if (WELO){
+        welo_winner.2 <- welo_winner.2 + ((250/((n_winner.2 + 5)^0.4)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))
+      } else {
+        elo_winner.2 <- elo_winner.2 + ((250/((n_winner.2 + 5)^0.2)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))}
       winner.2 <- ifelse(match_result.2 == 1, winner.4[seq(1, 4, by = 2)], winner.4[seq(2, 4, by = 2)])
       table.2[t, ] <- winner.2
 
 
-
-      p.1 <- tennis_prob(elo_winner.2[1], elo_winner.2[2])
+      if (WELO){
+        p.1 <- tennis_prob(welo_winner.2[1], welo_winner.2[2])
+      } else {
+        p.1 <- tennis_prob(elo_winner.2[1], elo_winner.2[2])}
       match_result.1 <- rbern(1, p.1)
-      elo_winner.1 <- if (match_result.1 == 1) elo_winner.2[1] else  elo_winner.2[2]
+      if (WELO){
+        welo_winner.1 <- if (match_result.1 == 1) welo_winner.2[1] else  welo_winner.2[2]
+      } else {
+        elo_winner.1 <- if (match_result.1 == 1) elo_winner.2[1] else  elo_winner.2[2] }
       n_winner.1 <- if (match_result.1 == 1)  n_winner.2[1] + 1 else n_winner.2[2] + 1
-      elo_winner.1 <- elo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1)))
+      if (WELO){
+        welo_winner.1 <- welo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1)))
+      } else {
+        elo_winner.1 <- elo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1))) }
       winner.1 <- if (match_result.1 == 1) winner.2[1] else winner.2[2]
       table.1[t, 1] <- winner.1
-
-
     }
 
     prob.8 <- table(table.8) / sim
@@ -1486,30 +1736,52 @@ simulate_tournament <- function(X, sim =  10000) {
 
       p.4 <- sapply(1:4, function (c) tennis_prob(X[c,3], X[c,4]))
       match_result.4 <- rbern (4, p.4)
-      elo_winner.4 <- ifelse(match_result.4 == 1, X[,3], X[,4])
+      if (WELO) {
+        welo_winner.4 <- ifelse(match_result.4 == 1, X[,3], X[,4])
+      } else {
+        elo_winner.4 <- ifelse(match_result.4 == 1, X[,3], X[,4])}
       n_winner.4 <- ifelse(match_result.4 == 1, X[,5] + 1, X[,6] + 1)
-      elo_winner.4 <- elo_winner.4 + ((250/((n_winner.4 + 5)^0.4)) * (ifelse(match_result.4 == 1, 1 - p.4, p.4)))
+      if (WELO){
+        welo_winner.4 <- welo_winner.4 + ((250/((n_winner.4 + 5)^0.4)) * (ifelse(match_result.4 == 1, 1 - p.4, p.4)))
+      } else {
+        elo_winner.4 <- elo_winner.4 + ((250/((n_winner.4 + 5)^0.4)) * (ifelse(match_result.4 == 1, 1 - p.4, p.4)))}
       winner.4 <- ifelse(match_result.4 == 1,  X[, 1], X[, 2])
       table.4[t, ] <- winner.4
 
-      p.2 <- sapply(1:2, function (b) tennis_prob(elo_winner.4[b*2-1], elo_winner.4[b*2]))
+      if (WELO){
+        p.2 <- sapply(1:2, function (b) tennis_prob(welo_winner.4[b*2-1], welo_winner.4[b*2]))
+      } else {
+        p.2 <- sapply(1:2, function (b) tennis_prob(elo_winner.4[b*2-1], elo_winner.4[b*2]))}
       match_result.2 <- rbern (2, p.2)
-      elo_winner.2 <- ifelse(match_result.2 == 1, elo_winner.4[seq(1, 4, by = 2)], elo_winner.4[seq(2, 4, by = 2)])
+      if (WELO){
+        welo_winner.2 <- ifelse(match_result.2 == 1, welo_winner.4[seq(1, 4, by = 2)], welo_winner.4[seq(2, 4, by = 2)])
+      } else {
+        elo_winner.2 <- ifelse(match_result.2 == 1, elo_winner.4[seq(1, 4, by = 2)], elo_winner.4[seq(2, 4, by = 2)])}
       n_winner.2 <- ifelse(match_result.2 == 1, n_winner.4[seq(1, 4, by = 2)] + 1, n_winner.4[seq(2, 4, by = 2)] + 1)
-      elo_winner.2 <- elo_winner.2 + ((250/((n_winner.2 + 5)^0.2)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))
+      if (WELO){
+        welo_winner.2 <- welo_winner.2 + ((250/((n_winner.2 + 5)^0.4)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))
+      } else {
+        elo_winner.2 <- elo_winner.2 + ((250/((n_winner.2 + 5)^0.2)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))}
       winner.2 <- ifelse(match_result.2 == 1, winner.4[seq(1, 4, by = 2)], winner.4[seq(2, 4, by = 2)])
       table.2[t, ] <- winner.2
 
 
-
-      p.1 <- tennis_prob(elo_winner.2[1], elo_winner.2[2])
+      if (WELO){
+        p.1 <- tennis_prob(welo_winner.2[1], welo_winner.2[2])
+      } else {
+        p.1 <- tennis_prob(elo_winner.2[1], elo_winner.2[2])}
       match_result.1 <- rbern(1, p.1)
-      elo_winner.1 <- if (match_result.1 == 1) elo_winner.2[1] else  elo_winner.2[2]
+      if (WELO){
+        welo_winner.1 <- if (match_result.1 == 1) welo_winner.2[1] else  welo_winner.2[2]
+      } else {
+        elo_winner.1 <- if (match_result.1 == 1) elo_winner.2[1] else  elo_winner.2[2] }
       n_winner.1 <- if (match_result.1 == 1)  n_winner.2[1] + 1 else n_winner.2[2] + 1
-      elo_winner.1 <- elo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1)))
+      if (WELO){
+        welo_winner.1 <- welo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1)))
+      } else {
+        elo_winner.1 <- elo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1))) }
       winner.1 <- if (match_result.1 == 1) winner.2[1] else winner.2[2]
       table.1[t, 1] <- winner.1
-
 
     }
 
@@ -1531,19 +1803,35 @@ simulate_tournament <- function(X, sim =  10000) {
 
       p.2 <- sapply(1:2, function (b) tennis_prob(X[b,3], X[b,4]))
       match_result.2 <- rbern (2, p.2)
-      elo_winner.2 <- ifelse(match_result.2 == 1,X[,3], X[,4])
+      if (WELO){
+        welo_winner.2 <- ifelse(match_result.2 == 1, X[,3], X[,4])
+      } else {
+        elo_winner.2 <- ifelse(match_result.2 == 1, X[,3], X[,4])    }
       n_winner.2 <- ifelse(match_result.2 == 1,  X[,5] + 1, X[,6] + 1)
-      elo_winner.2 <- elo_winner.2 + ((250/((n_winner.2 + 5)^0.2)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))
+      if (WELO){
+        welo_winner.2 <- welo_winner.2 + ((250/((n_winner.2 + 5)^0.4)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))
+      } else {
+        elo_winner.2 <- elo_winner.2 + ((250/((n_winner.2 + 5)^0.2)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))}
       winner.2 <- ifelse(match_result.2 == 1, X[, 1], X[, 2])
       table.2[t, ] <- winner.2
 
 
 
-      p.1 <- tennis_prob(elo_winner.2[1], elo_winner.2[2])
+
+      if (WELO){
+        p.1 <- tennis_prob(welo_winner.2[1], welo_winner.2[2])
+      } else {
+        p.1 <- tennis_prob(elo_winner.2[1], elo_winner.2[2])}
       match_result.1 <- rbern(1, p.1)
-      elo_winner.1 <- if (match_result.1 == 1) elo_winner.2[1] else  elo_winner.2[2]
+      if (WELO){
+        welo_winner.1 <- if (match_result.1 == 1) welo_winner.2[1] else  welo_winner.2[2]
+      } else {
+        elo_winner.1 <- if (match_result.1 == 1) elo_winner.2[1] else  elo_winner.2[2] }
       n_winner.1 <- if (match_result.1 == 1)  n_winner.2[1] + 1 else n_winner.2[2] + 1
-      elo_winner.1 <- elo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1)))
+      if (WELO){
+        welo_winner.1 <- welo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1)))
+      } else {
+        elo_winner.1 <- elo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1))) }
       winner.1 <- if (match_result.1 == 1) winner.2[1] else winner.2[2]
       table.1[t, 1] <- winner.1
 
@@ -1560,433 +1848,4 @@ simulate_tournament <- function(X, sim =  10000) {
   }
 }
 
-
-###
-#cambiano solo i nomi da elo a Welo
-simulate_tournament_welo <- function(X, sim =  10000) {
-  n <- nrow(X)
-
-  table.64 <- matrix(0, nrow = sim, ncol = 64)
-  table.32 <- matrix(0, nrow = sim, ncol = 32)
-  table.16 <- matrix(0, nrow = sim, ncol = 16)
-  table.8 <- matrix(0, nrow = sim, ncol = 8)
-  table.4 <- matrix(0, nrow = sim, ncol = 4)
-  table.2 <- matrix(0, nrow = sim, ncol = 2)
-  table.1 <- matrix(0, nrow = sim, ncol = 1)
-
-  #  startiamo i vettori per i 64esimi
-  p.64 <- numeric(64)
-  WElo_winner.64 <- numeric(64)
-  n_winner.64 <- numeric(64)
-  winner.64 <- numeric(64)
-
-  #  #startiamo i vettori per i 32esimi
-  p.32<-numeric(32)
-  WElo_winner.32 <- numeric(32)
-  n_winner.32 <- numeric(32)
-  winner.32 <- numeric(32)
-
-  #startiamo i valori per i 16esimi
-  p.16<-numeric(16)
-  WElo_winner.16<- numeric(16)
-  n_winner.16 <- numeric(16)
-  winner.16 <- numeric(16)
-
-  #startiamo i valori per i ottavi
-  p.8<-numeric(8)
-  WElo_winner.8<- numeric(8)
-  n_winner.8 <- numeric(8)
-  winner.8 <- numeric(8)
-
-  #startiamo i valori per i quarti
-  p.4<-numeric(4)
-  WElo_winner.4<- numeric(4)
-  n_winner.4 <- numeric(4)
-  winner.4 <- numeric(4)
-
-  #startiamo i valori per semi
-  p.2<-numeric(2)
-  WElo_winner.2<- numeric(2)
-  n_winner.2 <- numeric(2)
-  winner.2 <- numeric(2)
-
-  #startiamo i valori per finale
-  p.1<-numeric(1)
-  WElo_winner.1<- numeric(1)
-  n_winner.1 <- numeric(1)
-  winner.1 <- numeric(1)
-
-  pb <- progress_bar$new(total = sim, format = "[:bar] :percent Time remaining: :eta")
-
-  # Ora incomincio una serie di if, quello che fanno è tutti lo stesso, cambia solo in base
-  # a che fase del torneo gli metto in input
-
-  if ( n==64) {
-    for (t in 1:sim) {
-
-      pb$tick() # Aggiorna la barra di avanzamento
-
-
-      p.64 <- sapply(1:64, function (x) tennis_prob(X[x,3], X[x,4]))
-      match_result.64 <- rbern (64, p.64)
-      WElo_winner.64<-ifelse(match_result.64 ==1, X[,3], X[,4])
-      n_winner.64 <- ifelse(match_result.64 == 1, X[,5] + 1, X[,6] + 1)
-      WElo_winner.64 <- WElo_winner.64 + ((250/((n_winner.64 + 5)^0.4)) * (ifelse(match_result.64 == 1, 1 - p.64, p.64)))
-      winner.64 <- ifelse(match_result.64 == 1, X[, 1], X[, 2])
-      table.64[t, ] <- winner.64
-
-
-      p.32 <- sapply(1:32, function (f) tennis_prob(WElo_winner.64[f*2-1], WElo_winner.64[f*2]))
-      match_result.32 <- rbern (32, p.32)
-      WElo_winner.32 <- ifelse(match_result.32 == 1, WElo_winner.64[seq(1, 64, by = 2)], WElo_winner.64[seq(2, 64, by = 2)])
-      n_winner.32 <- ifelse(match_result.32 == 1, n_winner.64[seq(1, 64, by = 2)] + 1, n_winner.64[seq(2, 64, by = 2)] + 1)
-      WElo_winner.32 <- WElo_winner.32 + ((250/((n_winner.32 + 5)^0.4)) * (ifelse(match_result.32 == 1, 1 - p.32, p.32)))
-      winner.32 <- ifelse(match_result.32 == 1, winner.64[seq(1, 64, by = 2)], winner.64[seq(2, 64, by = 2)])
-      table.32[t, ] <- winner.32
-
-      p.16 <- sapply(1:16, function (g) tennis_prob(WElo_winner.32[g*2-1], WElo_winner.32[g*2]))
-      match_result.16 <- rbern (16, p.16)
-      WElo_winner.16 <- ifelse(match_result.16 == 1, WElo_winner.32[seq(1, 32, by = 2)], WElo_winner.32[seq(2, 32, by = 2)])
-      n_winner.16 <- ifelse(match_result.16 == 1, n_winner.32[seq(1, 32, by = 2)] + 1, n_winner.32[seq(2, 32, by = 2)] + 1)
-      WElo_winner.16 <- WElo_winner.16 + ((250/((n_winner.16 + 5)^0.4)) * (ifelse(match_result.16 == 1, 1 - p.16, p.16)))
-      winner.16 <- ifelse(match_result.16 == 1, winner.32[seq(1, 32, by = 2)], winner.32[seq(2, 32, by = 2)])
-      table.16[t, ] <- winner.16
-
-
-      p.8 <- sapply(1:8, function (m) tennis_prob(WElo_winner.16[m*2-1], WElo_winner.16[m*2]))
-      match_result.8 <- rbern (8, p.8)
-      WElo_winner.8 <- ifelse(match_result.8 == 1, WElo_winner.16[seq(1, 16, by = 2)], WElo_winner.16[seq(2, 16, by = 2)])
-      n_winner.8 <- ifelse(match_result.8 == 1, n_winner.16[seq(1, 16, by = 2)] + 1, n_winner.16[seq(2, 16, by = 2)] + 1)
-      WElo_winner.8 <- WElo_winner.8 + ((250/((n_winner.8 + 5)^0.4)) * (ifelse(match_result.8 == 1, 1 - p.8, p.8)))
-      winner.8 <- ifelse(match_result.8 == 1, winner.16[seq(1, 16, by = 2)], winner.16[seq(2, 16, by = 2)])
-      table.8[t, ] <- winner.8
-
-      p.4 <- sapply(1:4, function (c) tennis_prob(WElo_winner.8[c*2-1], WElo_winner.8[c*2]))
-      match_result.4 <- rbern (4, p.4)
-      WElo_winner.4 <- ifelse(match_result.4 == 1, WElo_winner.8[seq(1, 8, by = 2)], WElo_winner.8[seq(2, 8, by = 2)])
-      n_winner.4 <- ifelse(match_result.4 == 1, n_winner.8[seq(1, 8, by = 2)] + 1, n_winner.8[seq(2, 8, by = 2)] + 1)
-      WElo_winner.4 <- WElo_winner.4 + ((250/((n_winner.4 + 5)^0.4)) * (ifelse(match_result.4 == 1, 1 - p.4, p.4)))
-      winner.4 <- ifelse(match_result.4 == 1, winner.8[seq(1, 8, by = 2)], winner.8[seq(2, 8, by = 2)])
-      table.4[t, ] <- winner.4
-
-      p.2 <- sapply(1:2, function (b) tennis_prob(WElo_winner.4[b*2-1], WElo_winner.4[b*2]))
-      match_result.2 <- rbern (2, p.2)
-      WElo_winner.2 <- ifelse(match_result.2 == 1, WElo_winner.4[seq(1, 4, by = 2)], WElo_winner.4[seq(2, 4, by = 2)])
-      n_winner.2 <- ifelse(match_result.2 == 1, n_winner.4[seq(1, 4, by = 2)] + 1, n_winner.4[seq(2, 4, by = 2)] + 1)
-      WElo_winner.2 <- WElo_winner.2 + ((250/((n_winner.2 + 5)^0.2)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))
-      winner.2 <- ifelse(match_result.2 == 1, winner.4[seq(1, 4, by = 2)], winner.4[seq(2, 4, by = 2)])
-      table.2[t, ] <- winner.2
-
-
-
-      p.1 <- tennis_prob(WElo_winner.2[1], WElo_winner.2[2])
-      match_result.1 <- rbern(1, p.1)
-      WElo_winner.1 <- if (match_result.1 == 1) WElo_winner.2[1] else  WElo_winner.2[2]
-      n_winner.1 <- if (match_result.1 == 1)  n_winner.2[1] + 1 else n_winner.2[2] + 1
-      WElo_winner.1 <- WElo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1)))
-      winner.1 <- if (match_result.1 == 1) winner.2[1] else winner.2[2]
-      table.1[t, 1] <- winner.1
-
-
-    }
-
-    prob.64 <- table(table.64) / sim
-    prob.32 <- table(table.32) / sim
-    prob.16 <- table(table.16) / sim
-    prob.8 <- table(table.8) / sim
-    prob.4 <- table(table.4) / sim
-    prob.2 <- table(table.2) / sim
-    prob.1 <- table(table.1) / sim
-
-    prob.64 <- sort(prob.64, decreasing = TRUE)
-    prob.32 <- sort(prob.32, decreasing = TRUE)
-    prob.16 <- sort(prob.16, decreasing = TRUE)
-    prob.8 <- sort(prob.8, decreasing = TRUE)
-    prob.4 <- sort(prob.4, decreasing = TRUE)
-    prob.2 <- sort(prob.2, decreasing = TRUE)
-    prob.1 <- sort(prob.1, decreasing = TRUE)
-
-    return(list(prob.64 = prob.64, prob.32 = prob.32, prob.16 = prob.16, prob.8 = prob.8, prob.4 = prob.4, prob.2 = prob.2, prob.1 = prob.1))
-  }
-  else if (n == 32){
-    for (t in 1:sim) {
-
-      pb$tick() # Aggiorna la barra di avanzamento
-      p.32 <- sapply(1:32, function (f) tennis_prob(X[f,3], X[f,4]))
-      match_result.32 <- rbern (32, p.32)
-      WElo_winner.32 <- ifelse(match_result.32 == 1, X[,3], X[,4])
-      n_winner.32 <- ifelse(match_result.32 == 1,  X[,5] + 1, X[,6] + 1)
-      WElo_winner.32 <- WElo_winner.32 + ((250/((n_winner.32 + 5)^0.4)) * (ifelse(match_result.32 == 1, 1 - p.32, p.32)))
-      winner.32 <- ifelse(match_result.32 == 1, X[, 1], X[, 2])
-      table.32[t, ] <- winner.32
-
-      p.16 <- sapply(1:16, function (g) tennis_prob(WElo_winner.32[g*2-1], WElo_winner.32[g*2]))
-      match_result.16 <- rbern (16, p.16)
-      WElo_winner.16 <- ifelse(match_result.16 == 1, WElo_winner.32[seq(1, 32, by = 2)], WElo_winner.32[seq(2, 32, by = 2)])
-      n_winner.16 <- ifelse(match_result.16 == 1, n_winner.32[seq(1, 32, by = 2)] + 1, n_winner.32[seq(2, 32, by = 2)] + 1)
-      WElo_winner.16 <- WElo_winner.16 + ((250/((n_winner.16 + 5)^0.4)) * (ifelse(match_result.16 == 1, 1 - p.16, p.16)))
-      winner.16 <- ifelse(match_result.16 == 1, winner.32[seq(1, 32, by = 2)], winner.32[seq(2, 32, by = 2)])
-      table.16[t, ] <- winner.16
-
-
-      p.8 <- sapply(1:8, function (m) tennis_prob(WElo_winner.16[m*2-1], WElo_winner.16[m*2]))
-      match_result.8 <- rbern (8, p.8)
-      WElo_winner.8 <- ifelse(match_result.8 == 1, WElo_winner.16[seq(1, 16, by = 2)], WElo_winner.16[seq(2, 16, by = 2)])
-      n_winner.8 <- ifelse(match_result.8 == 1, n_winner.16[seq(1, 16, by = 2)] + 1, n_winner.16[seq(2, 16, by = 2)] + 1)
-      WElo_winner.8 <- WElo_winner.8 + ((250/((n_winner.8 + 5)^0.4)) * (ifelse(match_result.8 == 1, 1 - p.8, p.8)))
-      winner.8 <- ifelse(match_result.8 == 1, winner.16[seq(1, 16, by = 2)], winner.16[seq(2, 16, by = 2)])
-      table.8[t, ] <- winner.8
-
-      p.4 <- sapply(1:4, function (c) tennis_prob(WElo_winner.8[c*2-1], WElo_winner.8[c*2]))
-      match_result.4 <- rbern (4, p.4)
-      WElo_winner.4 <- ifelse(match_result.4 == 1, WElo_winner.8[seq(1, 8, by = 2)], WElo_winner.8[seq(2, 8, by = 2)])
-      n_winner.4 <- ifelse(match_result.4 == 1, n_winner.8[seq(1, 8, by = 2)] + 1, n_winner.8[seq(2, 8, by = 2)] + 1)
-      WElo_winner.4 <- WElo_winner.4 + ((250/((n_winner.4 + 5)^0.4)) * (ifelse(match_result.4 == 1, 1 - p.4, p.4)))
-      winner.4 <- ifelse(match_result.4 == 1, winner.8[seq(1, 8, by = 2)], winner.8[seq(2, 8, by = 2)])
-      table.4[t, ] <- winner.4
-
-      p.2 <- sapply(1:2, function (b) tennis_prob(WElo_winner.4[b*2-1], WElo_winner.4[b*2]))
-      match_result.2 <- rbern (2, p.2)
-      WElo_winner.2 <- ifelse(match_result.2 == 1, WElo_winner.4[seq(1, 4, by = 2)], WElo_winner.4[seq(2, 4, by = 2)])
-      n_winner.2 <- ifelse(match_result.2 == 1, n_winner.4[seq(1, 4, by = 2)] + 1, n_winner.4[seq(2, 4, by = 2)] + 1)
-      WElo_winner.2 <- WElo_winner.2 + ((250/((n_winner.2 + 5)^0.2)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))
-      winner.2 <- ifelse(match_result.2 == 1, winner.4[seq(1, 4, by = 2)], winner.4[seq(2, 4, by = 2)])
-      table.2[t, ] <- winner.2
-
-
-
-      p.1 <- tennis_prob(WElo_winner.2[1], WElo_winner.2[2])
-      match_result.1 <- rbern(1, p.1)
-      WElo_winner.1 <- if (match_result.1 == 1) WElo_winner.2[1] else  WElo_winner.2[2]
-      n_winner.1 <- if (match_result.1 == 1)  n_winner.2[1] + 1 else n_winner.2[2] + 1
-      WElo_winner.1 <- WElo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1)))
-      winner.1 <- if (match_result.1 == 1) winner.2[1] else winner.2[2]
-      table.1[t, 1] <- winner.1
-
-
-    }
-
-    prob.32 <- table(table.32) / sim
-    prob.16 <- table(table.16) / sim
-    prob.8 <- table(table.8) / sim
-    prob.4 <- table(table.4) / sim
-    prob.2 <- table(table.2) / sim
-    prob.1 <- table(table.1) / sim
-
-    prob.32 <- sort(prob.32, decreasing = TRUE)
-    prob.16 <- sort(prob.16, decreasing = TRUE)
-    prob.8 <- sort(prob.8, decreasing = TRUE)
-    prob.4 <- sort(prob.4, decreasing = TRUE)
-    prob.2 <- sort(prob.2, decreasing = TRUE)
-    prob.1 <- sort(prob.1, decreasing = TRUE)
-
-    return(list(prob.32 = prob.32, prob.16 = prob.16, prob.8 = prob.8, prob.4 = prob.4, prob.2 = prob.2, prob.1 = prob.1))
-  }
-
-
-
-  else if (n == 16){
-    for (t in 1:sim) {
-
-      pb$tick() # Aggiorna la barra di avanzamento
-
-
-
-      p.16 <- sapply(1:16, function (g) tennis_prob(X[g,3], X[g,4]))
-      match_result.16 <- rbern (16, p.16)
-      WElo_winner.16 <- ifelse(match_result.16 == 1, X[,3], X[,4])
-      n_winner.16 <- ifelse(match_result.16 == 1,  X[,5] + 1, X[,6] + 1)
-      WElo_winner.16 <- WElo_winner.16 + ((250/((n_winner.16 + 5)^0.4)) * (ifelse(match_result.16 == 1, 1 - p.16, p.16)))
-      winner.16 <- ifelse(match_result.16 == 1, X[, 1], X[, 2])
-      table.16[t, ] <- winner.16
-
-
-      p.8 <- sapply(1:8, function (m) tennis_prob(WElo_winner.16[m*2-1], WElo_winner.16[m*2]))
-      match_result.8 <- rbern (8, p.8)
-      WElo_winner.8 <- ifelse(match_result.8 == 1, WElo_winner.16[seq(1, 16, by = 2)], WElo_winner.16[seq(2, 16, by = 2)])
-      n_winner.8 <- ifelse(match_result.8 == 1, n_winner.16[seq(1, 16, by = 2)] + 1, n_winner.16[seq(2, 16, by = 2)] + 1)
-      WElo_winner.8 <- WElo_winner.8 + ((250/((n_winner.8 + 5)^0.4)) * (ifelse(match_result.8 == 1, 1 - p.8, p.8)))
-      winner.8 <- ifelse(match_result.8 == 1, winner.16[seq(1, 16, by = 2)], winner.16[seq(2, 16, by = 2)])
-      table.8[t, ] <- winner.8
-
-      p.4 <- sapply(1:4, function (c) tennis_prob(WElo_winner.8[c*2-1], WElo_winner.8[c*2]))
-      match_result.4 <- rbern (4, p.4)
-      WElo_winner.4 <- ifelse(match_result.4 == 1, WElo_winner.8[seq(1, 8, by = 2)], WElo_winner.8[seq(2, 8, by = 2)])
-      n_winner.4 <- ifelse(match_result.4 == 1, n_winner.8[seq(1, 8, by = 2)] + 1, n_winner.8[seq(2, 8, by = 2)] + 1)
-      WElo_winner.4 <- WElo_winner.4 + ((250/((n_winner.4 + 5)^0.4)) * (ifelse(match_result.4 == 1, 1 - p.4, p.4)))
-      winner.4 <- ifelse(match_result.4 == 1, winner.8[seq(1, 8, by = 2)], winner.8[seq(2, 8, by = 2)])
-      table.4[t, ] <- winner.4
-
-      p.2 <- sapply(1:2, function (b) tennis_prob(WElo_winner.4[b*2-1], WElo_winner.4[b*2]))
-      match_result.2 <- rbern (2, p.2)
-      WElo_winner.2 <- ifelse(match_result.2 == 1, WElo_winner.4[seq(1, 4, by = 2)], WElo_winner.4[seq(2, 4, by = 2)])
-      n_winner.2 <- ifelse(match_result.2 == 1, n_winner.4[seq(1, 4, by = 2)] + 1, n_winner.4[seq(2, 4, by = 2)] + 1)
-      WElo_winner.2 <- WElo_winner.2 + ((250/((n_winner.2 + 5)^0.2)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))
-      winner.2 <- ifelse(match_result.2 == 1, winner.4[seq(1, 4, by = 2)], winner.4[seq(2, 4, by = 2)])
-      table.2[t, ] <- winner.2
-
-
-
-      p.1 <- tennis_prob(WElo_winner.2[1], WElo_winner.2[2])
-      match_result.1 <- rbern(1, p.1)
-      WElo_winner.1 <- if (match_result.1 == 1) WElo_winner.2[1] else  WElo_winner.2[2]
-      n_winner.1 <- if (match_result.1 == 1)  n_winner.2[1] + 1 else n_winner.2[2] + 1
-      WElo_winner.1 <- WElo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1)))
-      winner.1 <- if (match_result.1 == 1) winner.2[1] else winner.2[2]
-      table.1[t, 1] <- winner.1
-
-
-    }
-
-    prob.16 <- table(table.16) / sim
-    prob.8 <- table(table.8) / sim
-    prob.4 <- table(table.4) / sim
-    prob.2 <- table(table.2) / sim
-    prob.1 <- table(table.1) / sim
-
-    prob.16 <- sort(prob.16, decreasing = TRUE)
-    prob.8 <- sort(prob.8, decreasing = TRUE)
-    prob.4 <- sort(prob.4, decreasing = TRUE)
-    prob.2 <- sort(prob.2, decreasing = TRUE)
-    prob.1 <- sort(prob.1, decreasing = TRUE)
-
-    return(list(prob.16 = prob.16, prob.8 = prob.8, prob.4 = prob.4, prob.2 = prob.2, prob.1 = prob.1))
-  }
-
-  else if (n == 8){
-    for (t in 1:sim) {
-
-      pb$tick() # Aggiorna la barra di avanzamento
-
-      p.8 <- sapply(1:8, function (m)  tennis_prob(X[m,3], X[m,4]))
-      match_result.8 <- rbern (8, p.8)
-      WElo_winner.8 <- ifelse(match_result.8 == 1, X[,3], X[,4])
-      n_winner.8 <- ifelse(match_result.8 == 1, X[,5] + 1, X[,6] + 1)
-      WElo_winner.8 <- WElo_winner.8 + ((250/((n_winner.8 + 5)^0.4)) * (ifelse(match_result.8 == 1, 1 - p.8, p.8)))
-      winner.8 <- ifelse(match_result.8 == 1, X[, 1], X[, 2])
-      table.8[t, ] <- winner.8
-
-      p.4 <- sapply(1:4, function (c) tennis_prob(WElo_winner.8[c*2-1], WElo_winner.8[c*2]))
-      match_result.4 <- rbern (4, p.4)
-      WElo_winner.4 <- ifelse(match_result.4 == 1, WElo_winner.8[seq(1, 8, by = 2)], WElo_winner.8[seq(2, 8, by = 2)])
-      n_winner.4 <- ifelse(match_result.4 == 1, n_winner.8[seq(1, 8, by = 2)] + 1, n_winner.8[seq(2, 8, by = 2)] + 1)
-      WElo_winner.4 <- WElo_winner.4 + ((250/((n_winner.4 + 5)^0.4)) * (ifelse(match_result.4 == 1, 1 - p.4, p.4)))
-      winner.4 <- ifelse(match_result.4 == 1, winner.8[seq(1, 8, by = 2)], winner.8[seq(2, 8, by = 2)])
-      table.4[t, ] <- winner.4
-
-      p.2 <- sapply(1:2, function (b) tennis_prob(WElo_winner.4[b*2-1], WElo_winner.4[b*2]))
-      match_result.2 <- rbern (2, p.2)
-      WElo_winner.2 <- ifelse(match_result.2 == 1, WElo_winner.4[seq(1, 4, by = 2)], WElo_winner.4[seq(2, 4, by = 2)])
-      n_winner.2 <- ifelse(match_result.2 == 1, n_winner.4[seq(1, 4, by = 2)] + 1, n_winner.4[seq(2, 4, by = 2)] + 1)
-      WElo_winner.2 <- WElo_winner.2 + ((250/((n_winner.2 + 5)^0.2)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))
-      winner.2 <- ifelse(match_result.2 == 1, winner.4[seq(1, 4, by = 2)], winner.4[seq(2, 4, by = 2)])
-      table.2[t, ] <- winner.2
-
-
-
-      p.1 <- tennis_prob(WElo_winner.2[1], WElo_winner.2[2])
-      match_result.1 <- rbern(1, p.1)
-      WElo_winner.1 <- if (match_result.1 == 1) WElo_winner.2[1] else  WElo_winner.2[2]
-      n_winner.1 <- if (match_result.1 == 1)  n_winner.2[1] + 1 else n_winner.2[2] + 1
-      WElo_winner.1 <- WElo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1)))
-      winner.1 <- if (match_result.1 == 1) winner.2[1] else winner.2[2]
-      table.1[t, 1] <- winner.1
-
-
-    }
-
-    prob.8 <- table(table.8) / sim
-    prob.4 <- table(table.4) / sim
-    prob.2 <- table(table.2) / sim
-    prob.1 <- table(table.1) / sim
-
-    prob.8 <- sort(prob.8, decreasing = TRUE)
-    prob.4 <- sort(prob.4, decreasing = TRUE)
-    prob.2 <- sort(prob.2, decreasing = TRUE)
-    prob.1 <- sort(prob.1, decreasing = TRUE)
-
-    return(list(prob.8 = prob.8, prob.4 = prob.4, prob.2 = prob.2, prob.1 = prob.1))
-  }
-
-
-  else if (n == 4){
-    for (t in 1:sim) {
-
-      pb$tick() # Aggiorna la barra di avanzamento
-
-      p.4 <- sapply(1:4, function (c) tennis_prob(X[c,3], X[c,4]))
-      match_result.4 <- rbern (4, p.4)
-      WElo_winner.4 <- ifelse(match_result.4 == 1, X[,3], X[,4])
-      n_winner.4 <- ifelse(match_result.4 == 1, X[,5] + 1, X[,6] + 1)
-      WElo_winner.4 <- WElo_winner.4 + ((250/((n_winner.4 + 5)^0.4)) * (ifelse(match_result.4 == 1, 1 - p.4, p.4)))
-      winner.4 <- ifelse(match_result.4 == 1,  X[, 1], X[, 2])
-      table.4[t, ] <- winner.4
-
-      p.2 <- sapply(1:2, function (b) tennis_prob(WElo_winner.4[b*2-1], WElo_winner.4[b*2]))
-      match_result.2 <- rbern (2, p.2)
-      WElo_winner.2 <- ifelse(match_result.2 == 1, WElo_winner.4[seq(1, 4, by = 2)], WElo_winner.4[seq(2, 4, by = 2)])
-      n_winner.2 <- ifelse(match_result.2 == 1, n_winner.4[seq(1, 4, by = 2)] + 1, n_winner.4[seq(2, 4, by = 2)] + 1)
-      WElo_winner.2 <- WElo_winner.2 + ((250/((n_winner.2 + 5)^0.2)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))
-      winner.2 <- ifelse(match_result.2 == 1, winner.4[seq(1, 4, by = 2)], winner.4[seq(2, 4, by = 2)])
-      table.2[t, ] <- winner.2
-
-
-
-      p.1 <- tennis_prob(WElo_winner.2[1], WElo_winner.2[2])
-      match_result.1 <- rbern(1, p.1)
-      WElo_winner.1 <- if (match_result.1 == 1) WElo_winner.2[1] else  WElo_winner.2[2]
-      n_winner.1 <- if (match_result.1 == 1)  n_winner.2[1] + 1 else n_winner.2[2] + 1
-      WElo_winner.1 <- WElo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1)))
-      winner.1 <- if (match_result.1 == 1) winner.2[1] else winner.2[2]
-      table.1[t, 1] <- winner.1
-
-
-    }
-
-    prob.4 <- table(table.4) / sim
-    prob.2 <- table(table.2) / sim
-    prob.1 <- table(table.1) / sim
-
-    prob.4 <- sort(prob.4, decreasing = TRUE)
-    prob.2 <- sort(prob.2, decreasing = TRUE)
-    prob.1 <- sort(prob.1, decreasing = TRUE)
-
-    return(list(prob.4 = prob.4, prob.2 = prob.2, prob.1 = prob.1))
-  }
-
-  else if (n == 2){
-    for (t in 1:sim) {
-
-      pb$tick() # Aggiorna la barra di avanzamento
-
-      p.2 <- sapply(1:2, function (b) tennis_prob(X[b,3], X[b,4]))
-      match_result.2 <- rbern (2, p.2)
-      WElo_winner.2 <- ifelse(match_result.2 == 1,X[,3], X[,4])
-      n_winner.2 <- ifelse(match_result.2 == 1,  X[,5] + 1, X[,6] + 1)
-      WElo_winner.2 <- WElo_winner.2 + ((250/((n_winner.2 + 5)^0.2)) * (ifelse(match_result.2 == 1, 1 - p.2, p.2)))
-      winner.2 <- ifelse(match_result.2 == 1, X[, 1], X[, 2])
-      table.2[t, ] <- winner.2
-
-
-
-      p.1 <- tennis_prob(WElo_winner.2[1], WElo_winner.2[2])
-      match_result.1 <- rbern(1, p.1)
-      WElo_winner.1 <- if (match_result.1 == 1) WElo_winner.2[1] else  WElo_winner.2[2]
-      n_winner.1 <- if (match_result.1 == 1)  n_winner.2[1] + 1 else n_winner.2[2] + 1
-      WElo_winner.1 <- WElo_winner.1 + ((250/((n_winner.1+5)^0.4)) * (ifelse(match_result.1 == 1, 1 - p.1, p.1)))
-      winner.1 <- if (match_result.1 == 1) winner.2[1] else winner.2[2]
-      table.1[t, 1] <- winner.1
-
-
-    }
-
-    prob.2 <- table(table.2) / sim
-    prob.1 <- table(table.1) / sim
-
-    prob.2 <- sort(prob.2, decreasing = TRUE)
-    prob.1 <- sort(prob.1, decreasing = TRUE)
-
-    return(list(prob.2 = prob.2, prob.1 = prob.1))
-  }
-}
 

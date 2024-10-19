@@ -1,2 +1,18 @@
-exportPattern("^[[:alpha:]]+")
+# NAMESPACE
 
+# Exporting functions
+export(Betting_function)
+export(Results_betting)
+export(Results_balance)
+export(define_tournament)
+export(simulate_tournament)
+export(compute_elo)
+export(merged_tennis_data)
+export(clean_data)
+export(Rlab)
+export(welo)
+
+# Importing required packages
+
+import(Rlab)  # If Rlab is a package you depend on
+import(welo)  # If welo is a package you depend on

@@ -1,10 +1,12 @@
 \name{compute_elo}
 \alias{compute_elo}
 \title{
-Calculate Elo Ratings for Tennis Matches with Surface Adjustments
+Calculate Elo Ratings for Tennis Matches with Adjustments
 }
 \description{
-The \code{compute_elo} function calculates Elo ratings for tennis players based on match outcomes, incorporating adjustments for surface types and tournament significance. The function supports standard Elo ratings and variations such as surface-adjusted Elo and surface-specific Elo ratings. It can also generate confidence intervals and custom weights to refine rating computations.
+The \code{compute_elo} function calculates Elo ratings for tennis players based on match outcomes, incorporating adjustments for surface types and tournament significance. The function supports standard Elo ratings and variations such as surface-adjusted Elo and surface-specific Elo ratings. It can also generate confidence intervals and custom weights to refine rating computations. The function can optionally calculate WElo ratings, which incorporate additional match performance data. \cr
+
+The function was designed to further simulate tennis tournament and it is the input for the function \code{\link{define_tournament}}.
 }
 \usage{
 compute_elo(x, W = "GAMES", SP = 1500, K = "Kovalchik", s = 0.5,
@@ -12,7 +14,7 @@ compute_elo(x, W = "GAMES", SP = 1500, K = "Kovalchik", s = 0.5,
 }
 \arguments{
   \item{x}{
-    A data frame containing match results with required columns for winners, losers, and match metadata (e.g., \code{Date}, \code{Series}, \code{Round}, \code{Surface}, \code{Comment}).
+    A data frame (possibly obtained using the function \code{\link{clean_data}}) containing match results with required columns for winners, losers, and match metadata (e.g., \code{Date}, \code{Series}, \code{Round}, \code{Surface}, \code{Comment}).
   }
   \item{W}{
     A character string specifying the type of weighting to apply. Options include \code{"GAMES"} or \code{"SETS"}. The default is \code{"GAMES"}.
@@ -40,27 +42,31 @@ compute_elo(x, W = "GAMES", SP = 1500, K = "Kovalchik", s = 0.5,
   }
 }
 \details{
-The Elo rating system estimates the probability that player \(i\) will win against player \(j\) in a match at time \(t\) as follows:
+The Elo rating system estimates the probability that player i will win against player j in a match at time t as follows:
 
 \deqn{\hat{p}_{i,j}(t) = \frac{1}{1 + 10^{(E_j(t) - E_i(t))/400}}}
 
-The Elo rating for player \(i\) is then updated based on match results:
+The Elo rating for player i is then updated based on match results:
 
 \deqn{E_i(t + 1) = E_i(t) + K_i(t) \left [W_i(t) - \hat{p}_{i,j}(t)\right]}
 
 Where:
 \itemize{
-  \item W_i(t): Binary indicator (1 if player \(i\) wins, 0 otherwise).
+  \item W_i(t): Binary indicator (1 if player i wins, 0 otherwise).
   \item K_i(t): Constant factor determining the magnitude of rating adjustments, which can vary based on match significance or surface type.
 }
 
-This function also supports surface-specific Elo ratings and WElo ratings, where WElo further incorporates match dominance indicators. Different K-factor options adjust the Elo updates according to match conditions such as surface and tournament significance. For example, adjustments for Grand Slam tournaments or specific surfaces are made by setting parameter \(s\) based on match importance:
+This function also supports surface-specific Elo ratings and WElo ratings, where WElo further incorporates match dominance indicators. Different K-factor options adjust the Elo updates according to match conditions such as surface and tournament significance. For example, adjustments for Grand Slam tournaments or specific surfaces are made by setting parameter s based on match importance:
 
 \deqn{S =
 \begin{cases}
 1 & \text{if match is significant (e.g., Grand Slam)} \\
 s & \text{otherwise, where \( s < 1 \)}
 \end{cases}}
+
+The S factor is then used to adjust the rating update:
+\deqn{E_i(t + 1) = E_i(t) + K_i(t) \left [W_i(t) - \hat{p}_{i,j}(t)\right] S}
+
 
 Confidence intervals are optionally computed using a bootstrap approach, and custom weights can be applied to tailor the rating updates.
 }
@@ -75,17 +81,23 @@ A list containing:
   \item{dataset}{The original input data frame, \code{x}.}
 }
 \references{
-Elo, A. E. (1978). \emph{The Rating of Chess Players, Past and Present}. Arco Publishing.
-Kovalchik, S. A. (2016). Searching for the GOAT of tennis win prediction. \emph{Journal of Quantitative Analysis in Sports}, 12(3), 127-138.
+Elo, A. E. (1978). \emph{The Rating of Chess Players, Past and Present}. \cr
+Kovalchik, S. A. (2016). Searching for the GOAT of tennis win prediction. \emph{Journal of Quantitative Analysis in Sports}, 12(3), 127-138. \cr
+Angelini, Giovanni, Vincenzo Candila, and Luca De Angelis. "Weighted Elo rating for tennis match predictions." \emph{European Journal of Operational Research} 297.1 (2022): 120-132.\cr
+ \url{https://github.com/SaveFonta}
 }
 \seealso{
-\code{\link{clean_data}}, \code{\link{merged_tennis_data}}
+\code{\link{clean_data}}, \cr
+\code{\link{merged_tennis_data}} \cr
+\code{\link{define_tournament}}
 }
 \examples{
-# Example usage:
-# Assuming `match_data` is a data frame with the required columns:
-result <- compute_elo(match_data, W = "SETS", K = "Surface_Clay", WELO = TRUE)
-print(result)
+# Example usage for estimating the Clay-weighted Elo:
+# Assuming `tennis_data` is a data frame obtained using the function merged_tennis_data:
+cleaned_data <- clean_data(tennis_data, WELO = FALSE)
+
+estimation <- compute_elo(x = cleaned_data, s=0.5, K = "Surface_Clay", WELO = FALSE)
+View(estimation$results)
 }
 \author{
 Saverio Fontana

@@ -4,7 +4,7 @@
 #In input ci mettiamo la table ottenuta dalla simulazioni del torneo dai 64esimi con le probabilità di vittoria:
 
 
-#Funzione singola
+#Funzione fondamentale
 Betting_function <- function(X, Book, q_values, r_values, q_max = 1000, r_max = 1000) {
 
   # Trasformiamo probab in un df
@@ -225,10 +225,9 @@ Place_bet <- function(probab, book, Q_values, R_values, Q_max = 1000, R_max = 10
 
 
 #######################################################################
-#Q_max e R_max sono il limite superiore per q ed r, serve per rendere la betting strategy ancora più accurata
-#Questa è la funzione che fa tutto insieme
+#Functions that does everything togeter (except the first)
 
-Results_betting <- function (X, n = 1000, tournament = NA, Q = c(0.02, 0.05, 0.10, 0.15, 0.2, 0.25, 0.3),
+Results_betting <- function (X, Excel_name, n = 1000, tournament = NA, Q = c(0.02, 0.05, 0.10, 0.15, 0.2, 0.25, 0.3),
                              R = c(1.05, 1.10, 1.20, 1.30, 1.40, 1.50, 1.7, 2, 3), Q_max = 1000, R_max = 1000) {
   tournament_datas = data.frame(start_date = character(), sheet = character)
 
@@ -277,7 +276,7 @@ Results_betting <- function (X, n = 1000, tournament = NA, Q = c(0.02, 0.05, 0.1
     sessantaquattresimi <- torneo$sessantaquattresimi_ord
     risultati <- simulate_tournament(sessantaquattresimi, n)
     probab <- risultati$prob.1
-    Bookmakers <- read_excel("Database Tennis.xlsx", sheet = tournament_datas[i, 2])
+    Bookmakers <- read_excel(Excel_name, sheet = tournament_datas[i, 2])
     colnames(Bookmakers)[7] <- "Player"
 
     Bet_results[tournament_datas[i, 2]] <- list(Betting_function (probab, Bookmakers, q_values = Q, r_values = R, q_max = Q_max, r_max = R_max))
@@ -314,73 +313,4 @@ Results_balance <- function (x) {
 
 
 
-######################à
-# funzione per BETTING VERO
-
-
-define_per_bettare <- function(df, player_names) {
-  # Inizializzo un dataframe per i match
-  matches <- data.frame(player_i = character(),
-                        player_j = character(),
-                        Elo_i = numeric(),
-                        Elo_j = numeric(),
-                        n_partite_i = numeric(),
-                        n_partite_j = numeric(),
-                        stringsAsFactors = FALSE)
-
-
-  for (i in 1:(length(player_names) / 2)) {
-
-    # Seleziona i giocatori per il match corrente
-    player_i <- player_names[(i - 1) * 2 + 1]
-    player_j <- player_names[(i - 1) * 2 + 2]
-
-    # Ottieni l'indice dell'ultima partita per il giocatore i
-    last_row_i <- tail(which(df$P_i == player_i | df$P_j == player_i), 1)
-    # Se il giocatore i non ha partite, imposta l'Elo a 1500
-    if (length(last_row_i) == 0) {
-      Elo_i <- 1500
-    } else {
-      # Seleziona l'Elo dopo l'ultima partita del giocatore i
-      if (df$P_i[last_row_i] == player_i) {
-        Elo_i <- df$Elo_i_after_match[last_row_i]
-      } else {
-        Elo_i <- df$Elo_j_after_match[last_row_i]
-      }
-    }
-
-    # Ottieni l'indice dell'ultima partita per il giocatore j
-    last_row_j <- tail(which(df$P_i == player_j | df$P_j == player_j), 1)
-    # Se il giocatore j non ha partite, imposta l'Elo a 1500
-    if (length(last_row_j) == 0) {
-      Elo_j <- 1500
-    } else {
-      # Seleziona l'Elo dopo l'ultima partita del giocatore j
-      if (df$P_i[last_row_j] == player_j) {
-        Elo_j <- df$Elo_i_after_match[last_row_j]
-      } else {
-        Elo_j <- df$Elo_j_after_match[last_row_j]
-      }
-    }
-
-    # Calcola il numero di partite per il giocatore i
-    n_partite_i_sx<- sum(df$P_i == player_i)
-    n_partite_i_dx<- sum(df$P_j == player_i)
-    n_partite_i <- n_partite_i_sx + n_partite_i_dx
-
-    # Calcola il numero di partite per il giocatore j
-    n_partite_j_sx<- sum(df$P_i == player_j)
-    n_partite_j_dx<- sum(df$P_j == player_j)
-    n_partite_j <- n_partite_j_sx + n_partite_j_dx
-    # Aggiungi il match al dataframe dei match
-    matches <- rbind(matches, data.frame(player_i = player_i,
-                                         player_j = player_j,
-                                         Elo_i = Elo_i,
-                                         Elo_j = Elo_j,
-                                         n_partite_i = n_partite_i,
-                                         n_partite_j = n_partite_j))
-  }
-
-  return(matches)
-}
 

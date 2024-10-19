@@ -7,7 +7,8 @@ Maintainer: Saverio Fontana <yourself@somewhere.net>
 Description: 
     This package implements a comprehensive framework for 
     analyzing tennis betting results using an Elo rating 
-    system. It provides functions for simulating tournaments, 
+    system. It provides functions for downloading tennis data, fitting the Elo rating for every player, 
+    simulating tournaments, 
     calculating betting outcomes, and evaluating performance 
     metrics such as return on investment (ROI). 
     The package draws inspiration from V. Candila's work on 
@@ -16,3 +17,5 @@ Description:
 License: MIT
 Encoding: UTF-8
 LazyData: true
+
+
