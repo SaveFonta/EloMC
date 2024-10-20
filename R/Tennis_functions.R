@@ -14,18 +14,19 @@ merged_tennis_data <- function(gender = "ATP") {
   library(welo)
 
   # Load datasets for each year using the specified gender
-  X2013 <- tennis_data("2013", gender)
-  X2014 <- tennis_data("2014", gender)
-  X2015 <- tennis_data("2015", gender)
-  X2016 <- tennis_data("2016", gender)
-  X2017 <- tennis_data("2017", gender)
-  X2018 <- tennis_data("2018", gender)
-  X2019 <- tennis_data("2019", gender)
-  X2020 <- tennis_data("2020", gender)
-  X2021 <- tennis_data("2021", gender)
-  X2022 <- tennis_data("2022", gender)
-  X2023 <- tennis_data("2023", gender)
-  X2024 <- tennis_data("2024", gender)
+  X2013 <- suppressMessages(suppressWarnings(tennis_data("2013", gender)))
+  X2014 <- suppressMessages(suppressWarnings(tennis_data("2014", gender)))
+  X2015 <- suppressMessages(suppressWarnings(tennis_data("2015", gender)))
+  X2016 <- suppressMessages(suppressWarnings(tennis_data("2016", gender)))
+  X2017 <- suppressMessages(suppressWarnings(tennis_data("2017", gender)))
+  X2018 <- suppressMessages(suppressWarnings(tennis_data("2018", gender)))
+  X2019 <- suppressMessages(suppressWarnings(tennis_data("2019", gender)))
+  X2020 <- suppressMessages(suppressWarnings(tennis_data("2020", gender)))
+  X2021 <- suppressMessages(suppressWarnings(tennis_data("2021", gender)))
+  X2022 <- suppressMessages(suppressWarnings(tennis_data("2022", gender)))
+  X2023 <- suppressMessages(suppressWarnings(tennis_data("2023", gender)))
+  X2024 <- suppressMessages(suppressWarnings(tennis_data("2024", gender)))
+
 
   # Remove specified columns
   X2013 <- subset(X2013, select = -c(SJW, SJL, EXW, EXL, LBW, LBL))
@@ -37,6 +38,8 @@ merged_tennis_data <- function(gender = "ATP") {
 
   # Combine all datasets into one
   X <- rbind(X2013, X2014, X2015, X2016, X2017, X2018, X2019, X2020, X2021, X2022, X2023, X2024)
+
+  print("Download completed.")
 
   return(X)
 }

@@ -5,15 +5,11 @@ Version: 0.1.0
 Author: Saverio Fontana
 Maintainer: Saverio Fontana <yourself@somewhere.net>
 Description: 
-    This package implements a comprehensive framework for 
-    analyzing tennis betting results using an Elo rating 
-    system. It provides functions for downloading tennis data, fitting the Elo rating for every player, 
-    simulating tournaments, 
-    calculating betting outcomes, and evaluating performance 
-    metrics such as return on investment (ROI). 
-    The package draws inspiration from V. Candila's work on 
-    the "welo" package, utilizing useful functions from it 
-    to enhance its functionality. Ensure the packages "welo" and "Rlab" are installed
+Description: EloMC is an R library that provides a comprehensive framework for simulating and analyzing tennis results using Elo (or WElo) ratings. This library includes functions for:
+    - Downloading tennis match data from www.tennis-data.co.uk
+    - Fitting Elo ratings for each player
+    - Simulating tournament outcomes
+    With EloMC, users can evaluate the relationship between Elo-simulated probabilities and actual bookmaker odds, allowing for the identification of potentially profitable betting opportunities in major Grand Slam tournaments. Ensure the packages "welo" and "Rlab" are installed
 License: MIT
 Encoding: UTF-8
 LazyData: true
