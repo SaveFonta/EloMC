@@ -8,14 +8,22 @@ The EloMC package provides tools for calculating different Elo ratings for tenni
 \details{
 This library includes functions for:
   \itemize{
-    \item Downloading tennis match data from \url{http://www.tennis-data.co.uk}.
+    \item Downloading tennis match data.
     \item Fitting Elo ratings for each player.
     \item Simulating tournament outcomes.
     \item Evaluating a threshold-base betting strategy
   }
   With EloMC, users can evaluate the relationship between Elo-simulated probabilities and actual bookmaker odds, allowing for the identification of potentially profitable betting opportunities in major Grand Slam tournaments.
-
-To obtain betting odds, visit \url{https://github.com/SaveFonta/Tennis_odds_scraping}
+}
+\section{Functions}{
+  \code{\link{merged_tennis_data}}, \cr
+  \code{\link{clean_data}}, \cr
+  \code{\link{compute_elo}}, \cr
+  \code{\link{define_tournament}} \cr
+  \code{\link{simulate_tournament}}, \cr
+  \code{\link{Betting_function}}, \cr
+  \code{\link{Results_betting}}, \cr
+  \code{\link{Results_balance}}
 }
 \examples{
 library(EloMC)
