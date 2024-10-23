@@ -42,19 +42,23 @@ This package depends on the following packages:
 
 - **welo**: Needed for various Elo-related calculations and functions.
 - **Rlab**: Provides the `rbern` function for generating random Bernoulli variables.
+- **progress**: Creates a nice progress bar in the console while simulating the tournaments
+- **readxl**: Enable R to read excel files (where the ante-post odds are stored)
 
-Please ensure you have these packages installed before using **EloMC**. You can install them from CRAN with the following commands:
 
-```r
-install.packages("welo")
-install.packages("Rlab")
-```
+Those should be automatically installed while installing **EloMC**. 
 
-You can install **EloMC** directly from GitHub using the `remotes` package:
+You can install **EloMC** directly from GitHub using the `devtools` package:
 
 ```r
-install.packages("remotes")
-remotes::install_github("SaveFonta/EloMC")
+# First, install the devtools package if you haven't already
+install.packages("devtools")
+
+# Install EloMC from GitHub
+devtools::install_github("SaveFonta/EloMC")
+
+# Load the package
+library(EloMC)
 ```
 
 ### Functions

@@ -17,4 +17,3 @@ import(Rlab)  # If Rlab is a package you depend on
 import(welo)  # If welo is a package you depend on
 import(progress)
 import(readxl)
-import(gridExtra)
