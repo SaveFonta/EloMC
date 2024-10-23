@@ -64,6 +64,5 @@ This function is intended for internal use within functions like \code{\link{Res
 \author{
 Saverio Fontana
 }
-\keywords{internal}
 
 
