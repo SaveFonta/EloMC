@@ -46,7 +46,7 @@ This package depends on the following packages:
 - **readxl**: Enable R to read excel files (where the ante-post odds are stored)
 
 
-Those should be automatically installed while installing **EloMC**. 
+Those should be automatically installed while installing **EloMC**, but if this doesn't happen, I **suggest you to install them beforehand**.
 
 You can install **EloMC** directly from GitHub using the `devtools` package:
 
