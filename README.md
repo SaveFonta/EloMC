@@ -67,10 +67,13 @@ library(EloMC)
 #### `clean_data`
 #### `compute_elo'
 #### 'define_tournament'
-#### `simulate_tournament`
+#### 'simulate_tournament'
 #### 'Betting_function'
 #### 'Results_betting'
 #### 'Results_balance'
+#### `plot_player_elo`
+
+
 
 ## Example
 This section provides an example of how to use the **EloMC** library for simulating tennis results and analyzing betting opportunities.

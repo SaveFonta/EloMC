@@ -4,44 +4,110 @@
 
 #merge
 
-merged_tennis_data <- function(gender = "ATP") {
-  # Check if the 'welo' package is installed, and install it if not
-  if (!requireNamespace("welo", quietly = TRUE)) {
-    install.packages("welo")
+merged_tennis_data <- function(gender = "ATP", end_year = 2025, start_year = 2013) {
+
+  # Input validation
+  if (!gender %in% c("ATP", "WTA")) {
+    stop("The 'gender' parameter must be 'ATP' or 'WTA'")
   }
 
-  # Load the 'welo' package
-  library(welo)
+  if (end_year < start_year) {
+    stop("End year cannot be earlier than start year")
+  }
 
-  # Load datasets for each year using the specified gender
-  X2013 <- suppressMessages(suppressWarnings(tennis_data("2013", gender)))
-  X2014 <- suppressMessages(suppressWarnings(tennis_data("2014", gender)))
-  X2015 <- suppressMessages(suppressWarnings(tennis_data("2015", gender)))
-  X2016 <- suppressMessages(suppressWarnings(tennis_data("2016", gender)))
-  X2017 <- suppressMessages(suppressWarnings(tennis_data("2017", gender)))
-  X2018 <- suppressMessages(suppressWarnings(tennis_data("2018", gender)))
-  X2019 <- suppressMessages(suppressWarnings(tennis_data("2019", gender)))
-  X2020 <- suppressMessages(suppressWarnings(tennis_data("2020", gender)))
-  X2021 <- suppressMessages(suppressWarnings(tennis_data("2021", gender)))
-  X2022 <- suppressMessages(suppressWarnings(tennis_data("2022", gender)))
-  X2023 <- suppressMessages(suppressWarnings(tennis_data("2023", gender)))
-  X2024 <- suppressMessages(suppressWarnings(tennis_data("2024", gender)))
+  if (start_year < 2007) {
+    warning("Data might not be available for years before 2007")
+  }
 
+  # Installation and loading of welo package
+  if (!requireNamespace("welo", quietly = TRUE)) {
+    cat("📦 Installing 'welo' package...\n")
+    install.packages("welo", quiet = TRUE)
+  }
 
-  # Remove specified columns
-  X2013 <- subset(X2013, select = -c(SJW, SJL, EXW, EXL, LBW, LBL))
-  X2014 <- subset(X2014, select = -c(SJW, SJL, EXW, EXL, LBW, LBL))
-  X2015 <- subset(X2015, select = -c(EXW, EXL, LBW, LBL))
-  X2016 <- subset(X2016, select = -c(EXW, EXL, LBW, LBL))
-  X2017 <- subset(X2017, select = -c(EXW, EXL, LBW, LBL))
-  X2018 <- subset(X2018, select = -c(EXW, EXL, LBW, LBL))
+  suppressPackageStartupMessages(library(welo))
 
-  # Combine all datasets into one
-  X <- rbind(X2013, X2014, X2015, X2016, X2017, X2018, X2019, X2020, X2021, X2022, X2023, X2024)
+  # Create sequence of years
+  years <- start_year:end_year
+  n_years <- length(years)
 
-  print("Download completed.")
+  cat("🎾 Downloading", gender, "tennis data from", start_year, "to", end_year, "\n")
+  cat("📊 Processing", n_years, "years of data...\n\n")
 
-  return(X)
+  # List to store datasets
+  tennis_datasets <- list()
+
+  # Simple progress bar
+  pb_width <- 50
+
+  # Download data for each year
+  for (i in seq_along(years)) {
+    year <- as.character(years[i])
+
+    # Update progress bar
+    progress <- i / n_years
+    filled <- floor(progress * pb_width)
+    bar <- paste0(
+      "[",
+      paste(rep("█", filled), collapse = ""),
+      paste(rep("░", pb_width - filled), collapse = ""),
+      "] ",
+      sprintf("%3.0f%%", progress * 100),
+      " - Year ", year
+    )
+    cat("\r", bar)
+
+    # Download data with error handling
+    tryCatch({
+      data_year <- suppressMessages(suppressWarnings(tennis_data(year, gender)))
+
+      # Remove specific columns based on year
+      columns_to_remove <- c()
+
+      if (as.numeric(year) <= 2014) {
+        columns_to_remove <- c("SJW", "SJL", "EXW", "EXL", "LBW", "LBL")
+      } else if (as.numeric(year) <= 2018) {
+        columns_to_remove <- c("EXW", "EXL", "LBW", "LBL")
+      }
+
+      # Remove columns if they exist in the dataset
+      if (length(columns_to_remove) > 0) {
+        existing_cols <- intersect(columns_to_remove, names(data_year))
+        if (length(existing_cols) > 0) {
+          data_year <- data_year[, !names(data_year) %in% existing_cols, drop = FALSE]
+        }
+      }
+
+      tennis_datasets[[year]] <- data_year
+
+    }, error = function(e) {
+      cat("\n⚠️  Error downloading data for year", year, ":", e$message, "\n")
+    })
+  }
+
+  cat("\n\n🔄 Merging datasets...\n")
+
+  # Check if any datasets were downloaded
+  if (length(tennis_datasets) == 0) {
+    stop("❌ No data was downloaded successfully")
+  }
+
+  # Merge all datasets
+  merged_data <- do.call(rbind, tennis_datasets)
+
+  # Final statistics
+  n_matches <- nrow(merged_data)
+  n_tournaments <- length(unique(merged_data$Tournament))
+  date_range <- range(as.Date(merged_data$Date), na.rm = TRUE)
+
+  cat("✅ Download completed successfully!\n")
+  cat("📈 Dataset statistics:\n")
+  cat("   • Total matches:", format(n_matches, big.mark = ".", decimal.mark = ","), "\n")
+  cat("   • Unique tournaments:", n_tournaments, "\n")
+  cat("   • Period:", format(date_range[1], "%d/%m/%Y"), "-", format(date_range[2], "%d/%m/%Y"), "\n")
+  cat("   • Years processed:", paste(names(tennis_datasets), collapse = ", "), "\n\n")
+
+  return(merged_data)
 }
 
 
@@ -49,133 +115,218 @@ merged_tennis_data <- function(gender = "ATP") {
 
 #Non fa molto, sistema solo il df per poterlo mettere dentro welofit, e cancella le righe dove ci sono dati mancanti
 
-clean_data <- function (x, WELO = FALSE)
-{
-  start <- Sys.time()
+clean_data <- function(x, WELO = FALSE, verbose = TRUE, add_id = FALSE) {
 
-  if (!inherits(x, "data.frame"))
-    stop("x must be a data.frame. Please provide it in the correct form")
+  # ⏱️ Start timing
+  start_time <- Sys.time()
 
-  cat("Number of matches", nrow(x), "\n")
-
-  if (any(colnames(x) == "Tier")) {
-    colnames(x)[which(colnames(x) == "Tier")] <- "Series"
+  # 🔍 Input validation
+  if (!inherits(x, "data.frame")) {
+    stop("❌ The parameter 'x' must be a data.frame")
   }
 
-  #Rimuovo le righe che hanno valori mancanti nella colonna "ATP" o WTA
-
-  if ("ATP" %in% colnames(x) && any(is.na(x[, "ATP"]))) {
-    todrop <- which(is.na(x[, "ATP"]))
-    x <- x[-todrop, ]
-    cat("Dropping", length(todrop), "matches because ATP is missing\n")
-  } else if ("WTA" %in% colnames(x) && any(is.na(x[, "WTA"]))) {
-    todrop <- which(is.na(x[, "WTA"]))
-    x <- x[-todrop, ]
-    cat("Dropping", length(todrop), "matches because WTA is missing\n")
+  if (nrow(x) == 0) {
+    stop("❌ The provided dataset is empty")
   }
 
-  #Rimuovo le righe che hanno valori mancanti nella colonna "Location", "Tournament", "Date", "Series", "Surface" etcetc
-
-  if (any(is.na(x[, "Location"]))) {
-    todrop <- which(is.na(x[, "Location"]))
-    x <- x[-todrop, ]
-    cat("Dropping", length(todrop), "matches because Location is missing\n")
+  # 📊 Initial information
+  initial_rows <- nrow(x)
+  if (verbose) {
+    cat("🎾 TENNIS DATASET CLEANING\n")
+    cat("═════════════════════════\n")
+    cat("📈 Initial matches:", format(initial_rows, big.mark = ".", decimal.mark = ","), "\n\n")
   }
 
-  if (any(is.na(x[, "Tournament"]))) {
-    todrop <- which(is.na(x[, "Tournament"]))
-    x <- x[-todrop, ]
-    cat("Dropping", length(todrop), "matches because Tournament is missing\n")
+  # 🔄 Rename Tier -> Series column if necessary
+  if ("Tier" %in% colnames(x)) {
+    names(x)[names(x) == "Tier"] <- "Series"
+    if (verbose) cat("🔄 Renamed column 'Tier' to 'Series'\n")
   }
 
-  if (any(is.na(x[, "Date"]))) {
-    todrop <- which(is.na(x[, "Date"]))
-    x <- x[-todrop, ]
-    cat("Dropping", length(todrop), "matches because Date is missing\n")
-  }
+  # 📋 Definition of essential columns
+  essential_columns <- c("Location", "Tournament", "Date", "Series",
+                         "Surface", "Round", "Winner", "Loser", "Comment")
 
-  if (any(is.na(x[, "Series"]))) {
-    todrop <- which(is.na(x[, "Series"]))
-    x <- x[-todrop, ]
-    cat("Dropping", length(todrop), "matches because Series is missing\n")
-  }
-
-  if (any(is.na(x[, "Surface"]))) {
-    todrop <- which(is.na(x[, "Surface"]))
-    x <- x[-todrop, ]
-    cat("Dropping", length(todrop), "matches because Surface is missing\n")
-  }
-
-  if (any(is.na(x[, "Round"]))) {
-    todrop <- which(is.na(x[, "Round"]))
-    x <- x[-todrop, ]
-    cat("Dropping", length(todrop), "matches because Round is missing\n")
-  }
-
-  if (any(is.na(x[, "Winner"]))) {
-    todrop <- which(is.na(x[, "Winner"]))
-    x <- x[-todrop, ]
-    cat("Dropping", length(todrop), "matches because Winner is missing\n")
-  }
-
-  if (any(is.na(x[, "Loser"]))) {
-    todrop <- which(is.na(x[, "Loser"]))
-    x <- x[-todrop, ]
-    cat("Dropping", length(todrop), "matches because Loser is missing\n")
-  }
-
-  if (any(is.na(x[, "Comment"]))) {
-    todrop <- which(is.na(x[, "Comment"]))
-    x <- x[-todrop, ]
-    cat("Dropping", length(todrop), "matches because comment is missing\n")
-  }
-
-  res <- data.frame(Location = x$Location,
-                    Tournament = x$Tournament,
-                    Date = x$Date,
-                    Series = x$Series,
-                    Surface = x$Surface,
-                    Round = x$Round,
-                    Winner = x$Winner,
-                    Loser = x$Loser,
-                    Comment = x$Comment)
-
+  # Add ATP/WTA if present
+  ranking_col <- NULL
   if ("ATP" %in% colnames(x)) {
-    res$ATP <- x$ATP
+    essential_columns <- c(essential_columns, "ATP")
+    ranking_col <- "ATP"
   } else if ("WTA" %in% colnames(x)) {
-    res$WTA <- x$WTA
+    essential_columns <- c(essential_columns, "WTA")
+    ranking_col <- "WTA"
   }
 
-
-  #Nel caso si vorra mai usare il WELO? Anche solo per il primo turno
-  if(WELO){
-    if (any(colnames(x) == "W4")) {
-      NG_Winner <- rowSums(x[, c("W1", "W2", "W3", "W4", "W5")], na.rm = T)
-      NG_Loser <- rowSums(x[, c("L1", "L2", "L3", "L4", "L5")], na.rm = T)
-    }
-    else {
-      NG_Winner <- rowSums(x[, c("W1", "W2", "W3")], na.rm = T)
-      NG_Loser <- rowSums(x[, c("L1", "L2", "L3")], na.rm = T)
-    }
-    NS_Winner <- as.numeric(x$Wsets)
-    NS_Loser <- as.numeric(x$Lsets)
-    res$f_g_Winner <- NG_Winner/(NG_Winner + NG_Loser)
-    res$f_g_Loser <- NG_Loser/(NG_Loser + NG_Winner)
-    res$f_s_Winner <- NS_Winner/(NS_Winner + NS_Loser)
-    res$f_s_Loser <- NS_Loser/(NS_Winner + NS_Loser)
+  # 🔍 Check existence of essential columns
+  missing_cols <- setdiff(essential_columns, colnames(x))
+  if (length(missing_cols) > 0) {
+    stop("❌ Missing columns in dataset: ", paste(missing_cols, collapse = ", "))
   }
 
-  #Ordina per data, poi per round (1st, 2nd, 3rd, Quar, Semi, The Fin sono in ordine alfabetico)
-  res <- res[order(res$Date, res$Round), ]
+  # 📊 Counter for removed rows
+  removal_summary <- data.frame(
+    Reason = character(0),
+    Rows_Removed = numeric(0),
+    stringsAsFactors = FALSE
+  )
 
-  #Mette la colonna id come prima colonna, per bellezza
-  #res$id <- 1:nrow(res)
-  #res <- res[ , c("id", names(res)[names(res) != "id"])]
+  # 🧹 Helper function for removing missing data
+  remove_na_rows <- function(data, column_name, description) {
+    if (column_name %in% colnames(data) && any(is.na(data[[column_name]]))) {
+      na_rows <- which(is.na(data[[column_name]]))
+      n_removed <- length(na_rows)
 
-  end <- Sys.time()
-  cat("clean() took", round(end-start, 2), "seconds to run\n")
-  return(res)
+      data <- data[-na_rows, , drop = FALSE]
+
+      # Update summary
+      removal_summary <<- rbind(removal_summary,
+                                data.frame(Reason = description,
+                                           Rows_Removed = n_removed,
+                                           stringsAsFactors = FALSE))
+
+      if (verbose) {
+        cat("🗑️  Removed", format(n_removed, big.mark = "."),
+            "matches -", description, "\n")
+      }
+    }
+    return(data)
+  }
+
+  # 🧹 Systematic cleaning
+  if (verbose) cat("🧹 Data cleaning in progress...\n")
+
+  # Remove rows with NA in essential columns
+  column_descriptions <- list(
+    "ATP" = "missing ATP ranking",
+    "WTA" = "missing WTA ranking",
+    "Location" = "missing location",
+    "Tournament" = "missing tournament",
+    "Date" = "missing date",
+    "Series" = "missing series",
+    "Surface" = "missing surface",
+    "Round" = "missing round",
+    "Winner" = "missing winner",
+    "Loser" = "missing loser",
+    "Comment" = "missing comment"
+  )
+
+  for (col in essential_columns) {
+    description <- column_descriptions[[col]]
+    x <- remove_na_rows(x, col, description)
+  }
+
+  # 📋 Create clean dataset
+  if (verbose) cat("\n📋 Creating final dataset...\n")
+
+  clean_data <- data.frame(
+    Location = x$Location,
+    Tournament = x$Tournament,
+    Date = x$Date,
+    Series = x$Series,
+    Surface = x$Surface,
+    Round = x$Round,
+    Winner = x$Winner,
+    Loser = x$Loser,
+    Comment = x$Comment,
+    stringsAsFactors = FALSE
+  )
+
+  # Add ranking column
+  if (!is.null(ranking_col)) {
+    clean_data[[ranking_col]] <- x[[ranking_col]]
+  }
+
+  # 🎯 Calculate WELO statistics if requested
+  if (WELO) {
+    if (verbose) cat("🎯 Calculating WELO statistics...\n")
+
+    tryCatch({
+      # Check availability of game columns
+      game_cols_5set <- c("W1", "W2", "W3", "W4", "W5", "L1", "L2", "L3", "L4", "L5")
+      game_cols_3set <- c("W1", "W2", "W3", "L1", "L2", "L3")
+
+      if (all(game_cols_5set %in% colnames(x))) {
+        # 5-set format
+        NG_Winner <- rowSums(x[, c("W1", "W2", "W3", "W4", "W5")], na.rm = TRUE)
+        NG_Loser <- rowSums(x[, c("L1", "L2", "L3", "L4", "L5")], na.rm = TRUE)
+      } else if (all(game_cols_3set %in% colnames(x))) {
+        # 3-set format
+        NG_Winner <- rowSums(x[, c("W1", "W2", "W3")], na.rm = TRUE)
+        NG_Loser <- rowSums(x[, c("L1", "L2", "L3")], na.rm = TRUE)
+      } else {
+        warning("⚠️  Game columns not found, WELO skipped")
+        WELO <- FALSE
+      }
+
+      if (WELO && "Wsets" %in% colnames(x) && "Lsets" %in% colnames(x)) {
+        NS_Winner <- as.numeric(x$Wsets)
+        NS_Loser <- as.numeric(x$Lsets)
+
+        # Calculate fractions with division by zero control
+        total_games <- NG_Winner + NG_Loser
+        total_sets <- NS_Winner + NS_Loser
+
+        clean_data$f_g_Winner <- ifelse(total_games > 0, NG_Winner / total_games, 0)
+        clean_data$f_g_Loser <- ifelse(total_games > 0, NG_Loser / total_games, 0)
+        clean_data$f_s_Winner <- ifelse(total_sets > 0, NS_Winner / total_sets, 0)
+        clean_data$f_s_Loser <- ifelse(total_sets > 0, NS_Loser / total_sets, 0)
+
+        if (verbose) cat("✅ WELO statistics added successfully\n")
+      }
+
+    }, error = function(e) {
+      warning("⚠️  Error in WELO calculation: ", e$message)
+    })
+  }
+
+  # 📅 Sort by date and round
+  if (verbose) cat("📅 Sorting by date and round...\n")
+  clean_data <- clean_data[order(clean_data$Date, clean_data$Round), ]
+
+  # 🆔 Add ID if requested
+  if (add_id) {
+    clean_data$id <- 1:nrow(clean_data)
+    clean_data <- clean_data[, c("id", setdiff(names(clean_data), "id"))]
+    if (verbose) cat("🆔 Added ID column\n")
+  }
+
+  # ⏱️ Final statistics
+  end_time <- Sys.time()
+  execution_time <- round(as.numeric(end_time - start_time), 3)
+  final_rows <- nrow(clean_data)
+  removed_rows <- initial_rows - final_rows
+  retention_rate <- round((final_rows / initial_rows) * 100, 1)
+
+  if (verbose) {
+    cat("\n")
+    cat("✅ CLEANING COMPLETED\n")
+    cat("═══════════════════\n")
+    cat("📊 Final statistics:\n")
+    cat("   • Initial matches:", format(initial_rows, big.mark = "."), "\n")
+    cat("   • Final matches:  ", format(final_rows, big.mark = "."), "\n")
+    cat("   • Removed matches:", format(removed_rows, big.mark = "."), "\n")
+    cat("   • Retention rate: ", retention_rate, "%\n")
+    cat("   • Execution time: ", execution_time, "seconds\n")
+
+    if (nrow(removal_summary) > 0) {
+      cat("\n📋 Removal details:\n")
+      for (i in 1:nrow(removal_summary)) {
+        cat("   •", removal_summary$Reason[i], ":",
+            format(removal_summary$Rows_Removed[i], big.mark = "."), "matches\n")
+      }
+    }
+
+    if (WELO) {
+      welo_cols <- c("f_g_Winner", "f_g_Loser", "f_s_Winner", "f_s_Loser")
+      welo_present <- sum(welo_cols %in% colnames(clean_data))
+      cat("   • WELO columns added:", welo_present, "/4\n")
+    }
+    cat("\n")
+  }
+
+  return(clean_data)
 }
+
 
 
 
@@ -187,327 +338,415 @@ clean_data <- function (x, WELO = FALSE)
 
 #Le funzioni di perdita vengono calcolate solo per i match "Completed" e per quella specifica superficie.
 
-compute_elo <- function (x, W = "GAMES", SP = 1500, K = "Kovalchik", s=0.5, CI = FALSE, alpha = 0.05, B = 1000, WELO = FALSE) {
-  start <- Sys.time()
-  if ((W != "GAMES") & (W != "SETS")) {
-    stop(cat("#Warning:\n Valid choices for the parameter 'W' are currently 'GAMES' and 'SETS' \n"))
+compute_elo <- function(x, W = "GAMES", SP = 1500, K = "Kovalchik", s = 0.5,
+                        CI = FALSE, alpha = 0.05, B = 1000, WELO = FALSE, verbose = TRUE) {
+
+  # ⏱️ Start timing
+  start_time <- Sys.time()
+
+  # 🔍 Input validation
+  if (!inherits(x, "data.frame")) {
+    stop("❌ The parameter 'x' must be a data.frame")
   }
 
-
-  #Startiamo df vuoto
-  Elo_df <- data.frame(Elo_Winner_before_match = NA,
-                       Elo_Loser_before_match = NA,
-                       Elo_Winner_after_match = NA,
-                       Elo_Loser_after_match = NA,
-                       Elo_pi_hat = NA)
-
-  if(WELO) {
-    WElo_Winner_before_match <- NA
-    WElo_Loser_before_match <- NA
-    WElo_Winner_after_match <- NA
-    WElo_Loser_after_match <- NA
-    WElo_pi_hat <- NA
+  if (!W %in% c("GAMES", "SETS")) {
+    stop("❌ Invalid 'W' parameter. Options: 'GAMES', 'SETS'")
   }
 
-  if (CI == TRUE) {
-    Elo_df$Elo_Winner_lb <- NA
-    Elo_df$Elo_Winner_ub <- NA
-    Elo_df$Elo_Loser_lb <- NA
-    Elo_df$Elo_Loser_ub <- NA
+  if (nrow(x) == 0) {
+    stop("❌ Empty dataset")
+  }
 
-    if(WELO) {
-      Elo_df$WElo_Winner_lb <- NA
-      Elo_df$WElo_Winner_ub <- NA
-      Elo_df$WElo_Loser_lb <- NA
-      Elo_df$WElo_Loser_ub <- NA
+  # Check required columns
+  required_cols <- c("Winner", "Loser", "Comment", "Date", "Series", "Round", "Surface")
+  missing_cols <- setdiff(required_cols, colnames(x))
+  if (length(missing_cols) > 0) {
+    stop("❌ Missing columns: ", paste(missing_cols, collapse = ", "))
+  }
+
+  # Check WELO columns if necessary
+  if (WELO) {
+    welo_cols <- if (W == "GAMES") c("f_g_Winner", "f_g_Loser") else c("f_s_Winner", "f_s_Loser")
+    missing_welo <- setdiff(welo_cols, colnames(x))
+    if (length(missing_welo) > 0) {
+      warning("⚠️  Missing WELO columns: ", paste(missing_welo, collapse = ", "),
+              ". WELO disabled.")
+      WELO <- FALSE
     }
   }
 
-  #Startiamo un po di vettori
-  players_current_elo = c()
+  # 📊 Initial information
+  total_matches <- nrow(x)
+  completed_matches <- sum(x$Comment == "Completed", na.rm = TRUE)
 
+  if (verbose) {
+    cat("🎾 ELO RATING CALCULATION\n")
+    cat("═══════════════════════\n")
+    cat("📈 Total matches:     ", format(total_matches, big.mark = "."), "\n")
+    cat("✅ Completed matches: ", format(completed_matches, big.mark = "."), "\n")
+    cat("⚙️  Mode:", ifelse(WELO, "ELO + WELO", "ELO"), "\n")
+    cat("🎯 Weight:", W, "\n")
+    cat("🔧 K method:", K, "\n\n")
+  }
 
-  #NB: Scrivere:
-  "  if(WELO == TRUE){
-    players_current_welo = c()}"
-  #è uguale a scrivere (R è basato su C):
-  #browser()
-  if(WELO)
-    players_current_welo = c()
-  players_played_matches = c()
+  # 📋 Initialize data structures
+  n_matches <- nrow(x)
 
-  #browser()
-  #Prendiamo i vincitori e perdenti
-  for (Row in 1:nrow(x)) {
-    Winner <- x$Winner[Row]
-    Loser <- x$Loser[Row]
+  # Results dataframe
+  elo_results <- data.frame(
+    Elo_Winner_before_match = numeric(n_matches),
+    Elo_Loser_before_match = numeric(n_matches),
+    Elo_Winner_after_match = numeric(n_matches),
+    Elo_Loser_after_match = numeric(n_matches),
+    Elo_pi_hat = numeric(n_matches),
+    stringsAsFactors = FALSE
+  )
 
-    #Se il vincitore non è già presente nell'elenco dei giocatori, inizializza il suo rating Elo con
-    #il rating iniziale e imposta il numero di partite giocate a zero. Lo stesso viene fatto per il
-    #perdente
+  # Add WELO columns if necessary
+  if (WELO) {
+    elo_results[c("WElo_Winner_before_match", "WElo_Loser_before_match",
+                  "WElo_Winner_after_match", "WElo_Loser_after_match",
+                  "WElo_pi_hat")] <- NA_real_
+  }
 
-    if (!(Winner %in% names(players_current_elo))){
-      players_current_elo[Winner] <- SP
-      if(WELO)
-        players_current_welo[Winner] <- SP
-      players_played_matches[Winner] <- 0
+  # Add confidence intervals if requested
+  if (CI) {
+    ci_cols <- c("Elo_Winner_lb", "Elo_Winner_ub", "Elo_Loser_lb", "Elo_Loser_ub")
+    elo_results[ci_cols] <- NA_real_
+
+    if (WELO) {
+      welo_ci_cols <- c("WElo_Winner_lb", "WElo_Winner_ub", "WElo_Loser_lb", "WElo_Loser_ub")
+      elo_results[welo_ci_cols] <- NA_real_
+    }
+  }
+
+  # Vectors to track players
+  players_elo <- numeric(0)
+  players_welo <- if (WELO) numeric(0) else NULL
+  players_matches <- integer(0)
+
+  # 🔄 Helper functions
+  initialize_player <- function(player) {
+    if (!player %in% names(players_elo)) {
+      players_elo[player] <<- SP
+      players_matches[player] <<- 0
+
+      if (WELO) {
+        players_welo[player] <<- SP
+      }
+    }
+  }
+
+  compute_k_factor <- function(player, surface = NULL, series = NULL) {
+    matches_played <- players_matches[player]
+
+    base_k <- switch(K,
+                     "Kovalchik" = 250 / (matches_played + 5)^0.4,
+                     "Grand_Slam" = 250 / (matches_played + 5)^0.4,
+                     "Surface_Hard" = 250 / (matches_played + 5)^0.4,
+                     "Surface_Clay" = 250 / (matches_played + 5)^0.4,
+                     "Surface_Grass" = 250 / (matches_played + 5)^0.4,
+                     as.numeric(K)  # Constant numeric K
+    )
+
+    # Apply modifiers
+    modifier <- 1
+
+    if (K == "Grand_Slam" && !is.null(series) && series != "Grand Slam") {
+      modifier <- s
     }
 
-    if (!(Loser %in% names(players_current_elo))){
-      players_current_elo[Loser] <- SP
-
-      if(WELO)
-        players_current_welo[Loser] <- SP
-      players_played_matches[Loser] <- 0
+    if (K %in% c("Surface_Hard", "Surface_Clay", "Surface_Grass") && !is.null(surface)) {
+      target_surface <- switch(K,
+                               "Surface_Hard" = "Hard",
+                               "Surface_Clay" = "Clay",
+                               "Surface_Grass" = "Grass"
+      )
+      if (surface != target_surface) {
+        modifier <- s
+      }
     }
 
-    #Mette gli elo dell'ultima partita in before match, o quelli default se non ha fatto partite
-    #aggiorno il numero di partite giocate dal vincitore.
+    return(base_k * modifier)
+  }
 
-    Elo_df[Row, "Elo_Winner_before_match"] <- players_current_elo[Winner]
-    if(WELO)
-      Elo_df[Row, "WElo_Winner_before_match"] <- players_current_welo[Winner]
-    players_played_matches[Winner] <- players_played_matches[Winner] + 1
+  # Progress bar setup if verbose
+  if (verbose) {
+    pb_width <- 50
+    update_interval <- max(1, floor(n_matches / 100))
+  }
 
-    Elo_df[Row, "Elo_Loser_before_match"] <- players_current_elo[Loser]
+  # 🔄 Main loop
+  if (verbose) cat("🔄 Processing matches in progress...\n")
 
-    if(WELO)
-      Elo_df[Row, "WElo_Loser_before_match"] <- players_current_welo[Loser]
-    players_played_matches[Loser] <- players_played_matches[Loser] + 1
+  for (row in 1:n_matches) {
+    # Progress bar
+    if (verbose && (row %% update_interval == 0 || row == n_matches)) {
+      progress <- row / n_matches
+      filled <- floor(progress * pb_width)
+      bar <- paste0(
+        "[",
+        paste(rep("█", filled), collapse = ""),
+        paste(rep("░", pb_width - filled), collapse = ""),
+        "] ",
+        sprintf("%3.0f%%", progress * 100),
+        " (", row, "/", n_matches, ")"
+      )
+      cat("\r", bar)
+    }
 
-    #L'Elo andrà calcolato se la partita è finita, altrimenti rimetti quelli di prima visto che la partita non si è giocata, o sbaglio?
+    winner <- x$Winner[row]
+    loser <- x$Loser[row]
 
-    #Calcolo probabilità con ELO
+    # Initialize players if necessary
+    initialize_player(winner)
+    initialize_player(loser)
 
-    Elo_df[Row, "Elo_pi_hat"] <- tennis_prob(players_current_elo[Winner], players_current_elo[Loser])
+    # Save pre-match ratings
+    elo_results$Elo_Winner_before_match[row] <- players_elo[winner]
+    elo_results$Elo_Loser_before_match[row] <- players_elo[loser]
 
+    if (WELO) {
+      elo_results$WElo_Winner_before_match[row] <- players_welo[winner]
+      elo_results$WElo_Loser_before_match[row] <- players_welo[loser]
+    }
 
-    #Calcolo probabilità con WELO
+    # Increment match counter
+    players_matches[winner] <- players_matches[winner] + 1
+    players_matches[loser] <- players_matches[loser] + 1
 
-    if(WELO)
-      Elo_df[Row, "WElo_pi_hat"] <- tennis_prob(players_current_welo[Winner], players_current_welo[Loser])
+    # Calculate probabilities
+    elo_results$Elo_pi_hat[row] <- tennis_prob(players_elo[winner], players_elo[loser])
 
-    #Sinceramente ai CI non ci ho guardato perche non mi servono
+    if (WELO) {
+      elo_results$WElo_pi_hat[row] <- tennis_prob(players_welo[winner], players_welo[loser])
+    }
 
+    # Calculate confidence intervals if requested
     if (CI) {
-      p <- Elo_df[Row, "Elo_pi_hat"]
-      q <- 1 - p
-      sim_Winner <- sample(0:1, B, replace = T, prob = c(q, p))
-      Elo_df[Row, "Elo_Winner_lb"] <- stats::quantile(Elo_df[Row, "Elo_Winner_before_match"] + K_Winner * (sim_Winner - Elo_df[Row, "Elo_pi_hat"]), alpha/2)
-      Elo_df[Row, "Elo_Winner_ub"] <- stats::quantile(Elo_df[Row, "Elo_Winner_before_match"] + K_Winner * (sim_Winner - Elo_df[Row, "Elo_pi_hat"]), 1 - alpha/2)
-      sim_Loser <- sample(0:1, B, replace = T, prob = c(p, q))
-      Elo_df[Row, "Elo_Loser_lb"] <- stats::quantile(Elo_df[Row, "Elo_Loser_before_match"] + K_Loser * (sim_Loser - (1 - Elo_df[Row, "Elo_pi_hat"])), alpha/2)
-      Elo_df[Row, "Elo_Loser_ub"] <- stats::quantile(Elo_df[Row, "Elo_Loser_before_match"] + K_Loser * (sim_Loser - (1 - Elo_df[Row, "Elo_pi_hat"])), 1 - alpha/2)
+      tryCatch({
+        # CI calculations for ELO
+        p <- elo_results$Elo_pi_hat[row]
+        sim_winner <- sample(0:1, B, replace = TRUE, prob = c(1-p, p))
+        k_winner <- compute_k_factor(winner, x$Surface[row], x$Series[row])
 
-      if(WELO) {
-        p_w <- Elo_df[Row, "WElo_pi_hat"]
-        q_w <- 1 - p_w
-        sim_Winner <- sample(0:1, B, replace = T, prob = c(q_w, p_w))
-        Elo_df[Row, "WElo_Winner_lb"] <- stats::quantile(Elo_df[Row, "WElo_Winner_before_match"] + K_Winner * (sim_Winner - Elo_df[Row, "WElo_pi_hat"]), alpha/2)
-        Elo_df[Row, "WElo_Winner_ub"] <- stats::quantile(Elo_df[Row, "WElo_Winner_before_match"] + K_Winner * (sim_Winner - Elo_df[Row, "WElo_pi_hat"]), 1 - alpha/2)
-        sim_Loser <- sample(0:1, B, replace = T, prob = c(p_w, q_w))
-        Elo_df[Row, "WElo_Loser_lb"] <- stats::quantile(Elo_df[Row, "WElo_Loser_before_match"] + K_Loser * (sim_Loser - (1 - Elo_df[Row, "WElo_pi_hat"])), alpha/2)
-        Elo_df[Row, "WElo_Loser_ub"] <- stats::quantile(Elo_df[Row, "WElo_Loser_before_match"] + K_Loser * (sim_Loser - (1 - Elo_df[Row, "WElo_pi_hat"])), 1 - alpha/2)
-      }
-    }
+        winner_updates <- players_elo[winner] + k_winner * (sim_winner - p)
+        elo_results$Elo_Winner_lb[row] <- quantile(winner_updates, alpha/2)
+        elo_results$Elo_Winner_ub[row] <- quantile(winner_updates, 1 - alpha/2)
 
+        sim_loser <- sample(0:1, B, replace = TRUE, prob = c(p, 1-p))
+        k_loser <- compute_k_factor(loser, x$Surface[row], x$Series[row])
 
+        loser_updates <- players_elo[loser] + k_loser * (sim_loser - (1-p))
+        elo_results$Elo_Loser_lb[row] <- quantile(loser_updates, alpha/2)
+        elo_results$Elo_Loser_ub[row] <- quantile(loser_updates, 1 - alpha/2)
 
-    #NEL calcolo dell ELO concorrono solo i Completed... mi sembra una buona idea
+        # CI calculations for WELO if necessary
+        if (WELO) {
+          p_w <- elo_results$WElo_pi_hat[row]
+          sim_winner_w <- sample(0:1, B, replace = TRUE, prob = c(1-p_w, p_w))
+          winner_updates_w <- players_welo[winner] + k_winner * (sim_winner_w - p_w)
+          elo_results$WElo_Winner_lb[row] <- quantile(winner_updates_w, alpha/2)
+          elo_results$WElo_Winner_ub[row] <- quantile(winner_updates_w, 1 - alpha/2)
 
-    if(x[Row, "Comment"] == "Completed"){
-
-      surf_multiplier <- 1
-      gs <- 1
-
-      if (K == "Surface_Hard" && x[Row, "Surface"] != "Hard") {
-        surf_multiplier <- s
-      }
-
-      if (K == "Surface_Clay" && x[Row, "Surface"] != "Clay") {
-        surf_multiplier <- s
-      }
-
-      if (K == "Surface_Grass" && x[Row, "Surface"] != "Grass") {
-        surf_multiplier <- s
-      }
-
-      if (K == "Grand_Slam" && x[Row, "Series"] != "Grand Slam") {
-        gs <- s
-      }
-
-
-
-      if (K == "Kovalchik") {
-        K_Winner <- 250/(players_played_matches[Winner] + 5)^0.4
-        K_Loser <- 250/(players_played_matches[Loser] + 5)^0.4
-      }
-
-      else if (K == "Grand_Slam") {
-        K_Winner <- 250/(players_played_matches[Winner] + 5)^0.4 * gs
-        K_Loser <- 250/(players_played_matches[Loser] + 5)^0.4 * gs
-      }
-
-      else if (K == "Surface_Grass" | K == "Surface_Clay" | K == "Surface_Hard") {
-        K_Winner <- 250/(players_played_matches[Winner] + 5)^0.4 * surf_multiplier
-        K_Loser <- 250/(players_played_matches[Loser] + 5)^0.4 * surf_multiplier
-      }
-
-      else {
-        K_Winner <- K
-        K_Loser <- K
-      }
-
-      #Calcolo ELO after match
-
-      Elo_df[Row, "Elo_Winner_after_match"] <- players_current_elo[Winner] + K_Winner * (1 - Elo_df[Row, "Elo_pi_hat"])
-      Elo_df[Row, "Elo_Loser_after_match"] <- players_current_elo[Loser] - K_Loser * (1 - Elo_df[Row, "Elo_pi_hat"])
-
-      #Calcolo WELO after match
-      if(WELO) {
-        if (W == "GAMES") {
-          Elo_df[Row, "WElo_Winner_after_match"] <- players_current_welo[Winner] + K_Winner * (1 - Elo_df[Row, "WElo_pi_hat"]) * x[Row, "f_g_Winner"]
-          Elo_df[Row, "WElo_Loser_after_match"] <- players_current_welo[Loser] - K_Loser * (1 - Elo_df[Row, "WElo_pi_hat"]) * x[Row, "f_g_Winner"] #Qui forse avevo sbagliato la formula --> avevo messo f_g_Loser invee mi sa che ci va f_g_Winner
-        } else {
-          Elo_df[Row, "WElo_Winner_after_match"] <- players_current_welo[Winner] + K_Winner * (1 - Elo_df[Row, "WElo_pi_hat"]) * x[Row, "f_s_Winner"]
-          Elo_df[Row, "WElo_Loser_after_match"] <- players_current_welo[Loser] - K_Loser * (1 - Elo_df[Row, "WElo_pi_hat"]) * x[Row, "f_s_Winner"]
+          sim_loser_w <- sample(0:1, B, replace = TRUE, prob = c(p_w, 1-p_w))
+          loser_updates_w <- players_welo[loser] + k_loser * (sim_loser_w - (1-p_w))
+          elo_results$WElo_Loser_lb[row] <- quantile(loser_updates_w, alpha/2)
+          elo_results$WElo_Loser_ub[row] <- quantile(loser_updates_w, 1 - alpha/2)
         }
+      }, error = function(e) {
+        if (verbose) warning("⚠️  Error in CI calculation for row ", row, ": ", e$message)
+      })
+    }
 
+    # Update ratings only for completed matches
+    if (x$Comment[row] == "Completed") {
+      # Calculate K factors
+      k_winner <- compute_k_factor(winner, x$Surface[row], x$Series[row])
+      k_loser <- compute_k_factor(loser, x$Surface[row], x$Series[row])
+
+      # Update ELO
+      elo_results$Elo_Winner_after_match[row] <- players_elo[winner] +
+        k_winner * (1 - elo_results$Elo_pi_hat[row])
+      elo_results$Elo_Loser_after_match[row] <- players_elo[loser] -
+        k_loser * (1 - elo_results$Elo_pi_hat[row])
+
+      # Update WELO if necessary
+      if (WELO) {
+        weight_col <- if (W == "GAMES") "f_g_Winner" else "f_s_Winner"
+        weight <- x[[weight_col]][row]
+
+        elo_results$WElo_Winner_after_match[row] <- players_welo[winner] +
+          k_winner * (1 - elo_results$WElo_pi_hat[row]) * weight
+        elo_results$WElo_Loser_after_match[row] <- players_welo[loser] -
+          k_loser * (1 - elo_results$WElo_pi_hat[row]) * weight
+
+        players_welo[winner] <- elo_results$WElo_Winner_after_match[row]
+        players_welo[loser] <- elo_results$WElo_Loser_after_match[row]
       }
 
-      players_current_elo[Winner] <- Elo_df[Row, "Elo_Winner_after_match"]
-      players_current_elo[Loser] <- Elo_df[Row, "Elo_Loser_after_match"]
+      # Update current ratings
+      players_elo[winner] <- elo_results$Elo_Winner_after_match[row]
+      players_elo[loser] <- elo_results$Elo_Loser_after_match[row]
 
-      if(WELO) {
-        players_current_welo[Winner] <- Elo_df[Row, "WElo_Winner_after_match"]
-        players_current_welo[Loser] <- Elo_df[Row, "WElo_Loser_after_match"]
+    } else {
+      # Incomplete match - keep previous ratings and decrement counters
+      players_matches[winner] <- players_matches[winner] - 1
+      players_matches[loser] <- players_matches[loser] - 1
+
+      elo_results$Elo_Winner_after_match[row] <- players_elo[winner]
+      elo_results$Elo_Loser_after_match[row] <- players_elo[loser]
+
+      if (WELO) {
+        elo_results$WElo_Winner_after_match[row] <- players_welo[winner]
+        elo_results$WElo_Loser_after_match[row] <- players_welo[loser]
       }
     }
-    #NB che qui chiudo il grande if la partita è stata completata, cioe questo è quello che succede se la partita non è stata completata
-    else {
-      #Controllare i match fatti se va bene così, cosa metto se la partita non viene giocata? NA? 0?
-      players_played_matches[Winner] <- players_played_matches[Winner] - 1
-      players_played_matches[Loser] <- players_played_matches[Loser] - 1
-
-      Elo_df[Row, "Elo_Winner_after_match"] <- players_current_elo[Winner]
-      Elo_df[Row, "Elo_Loser_after_match"] <- players_current_elo[Loser]
-
-      if(WELO) {
-        Elo_df[Row, "WElo_Winner_after_match"] <- players_current_welo[Winner]
-        Elo_df[Row, "WElo_Loser_after_match"] <- players_current_welo[Loser]
-      }
-    }
   }
 
-  cat("-----------------------------", "\n")
+  if (verbose) cat("\n\n📊 Creating final dataset...\n")
 
-  x_sub <- data.frame(Date = x$Date, Series = x$Series, Round = x$Round,
-                      Surface = x$Surface, P_i = x$Winner, P_j = x$Loser, Outcome_P_i = 1,
-                      Outcome_P_j = 0, Elo_i_before_match = Elo_df$Elo_Winner_before_match,
-                      Elo_j_before_match = Elo_df$Elo_Loser_before_match, Elo_pi_hat = Elo_df$Elo_pi_hat,
-                      Elo_i_after_match = Elo_df$Elo_Winner_after_match, Elo_j_after_match = Elo_df$Elo_Loser_after_match,
-                      Comment = x$Comment)
+  # 📋 Create final dataset
+  final_data <- data.frame(
+    Date = x$Date,
+    Series = x$Series,
+    Round = x$Round,
+    Surface = x$Surface,
+    P_i = x$Winner,
+    P_j = x$Loser,
+    Outcome_P_i = 1,
+    Outcome_P_j = 0,
+    Elo_i_before_match = elo_results$Elo_Winner_before_match,
+    Elo_j_before_match = elo_results$Elo_Loser_before_match,
+    Elo_pi_hat = elo_results$Elo_pi_hat,
+    Elo_i_after_match = elo_results$Elo_Winner_after_match,
+    Elo_j_after_match = elo_results$Elo_Loser_after_match,
+    Comment = x$Comment,
+    stringsAsFactors = FALSE
+  )
 
-
-
-  if(WELO) {
-    x_sub$WElo_i_before_match <- Elo_df$WElo_Winner_before_match
-    x_sub$WElo_j_before_match <- Elo_df$WElo_Loser_before_match
-    x_sub$WElo_pi_hat <- Elo_df$WElo_pi_hat
-    x_sub$WElo_i_after_match <- Elo_df$WElo_Winner_after_match
-    x_sub$WElo_j_after_match <- Elo_df$WElo_Loser_after_match
+  # Add WELO columns to final dataset
+  if (WELO) {
+    welo_cols <- data.frame(
+      WElo_i_before_match = elo_results$WElo_Winner_before_match,
+      WElo_j_before_match = elo_results$WElo_Loser_before_match,
+      WElo_pi_hat = elo_results$WElo_pi_hat,
+      WElo_i_after_match = elo_results$WElo_Winner_after_match,
+      WElo_j_after_match = elo_results$WElo_Loser_after_match,
+      stringsAsFactors = FALSE
+    )
+    final_data <- cbind(final_data, welo_cols)
   }
 
-
-
-  if(CI) {
-    x_sub$Elo_i_before_match_lb <- Elo_df$Elo_Winner_lb
-    x_sub$Elo_i_before_match_ub <- Elo_df$Elo_Winner_ub
-    x_sub$Elo_j_before_match_lb <- Elo_df$Elo_Loser_lb
-    x_sub$Elo_j_before_match_ub <- Elo_df$Elo_Loser_ub
-    x_sub$WElo_i_before_match_lb <- Elo_df$WElo_Winner_lb
-    x_sub$WElo_i_before_match_ub <- Elo_df$WElo_Winner_ub
-    x_sub$WElo_j_before_match_lb <- Elo_df$WElo_Loser_lb
-    x_sub$WElo_j_before_match_ub <- Elo_df$WElo_Loser_ub
+  # Add confidence intervals to final dataset
+  if (CI) {
+    ci_data <- elo_results[, grep("_lb$|_ub$", names(elo_results)), drop = FALSE]
+    names(ci_data) <- gsub("Winner", "i", gsub("Loser", "j", names(ci_data)))
+    final_data <- cbind(final_data, ci_data)
   }
 
+  # 📈 Calculate performance metrics
+  if (verbose) cat("📈 Calculating performance metrics...\n")
 
+  completed_data <- final_data[final_data$Comment == "Completed", ]
 
-  #RICORDA: i vincitori sono sempre i giocatori i, i perdenti i giocatori j
-  #Tuttavia, la funzione di perdita deve essere calcolata solamente per quelle righe che hanno la colonna Comment == completed
-  #Quindi filtriamo il df per solo le partite complete
-
-  filtered_data <- x_sub[x_sub$Comment == "Completed", ]
-
-  #bisogna fare che in base al valore di K, cambia cosa verra evaluated
-  #Superfici
+  # Filter based on K type
   if (K == "Grand_Slam") {
-    filtered_data <- filtered_data[filtered_data$Series == "Grand Slam", ]
+    completed_data <- completed_data[completed_data$Series == "Grand Slam", ]
+  } else if (K == "Surface_Hard") {
+    completed_data <- completed_data[completed_data$Surface == "Hard", ]
+  } else if (K == "Surface_Clay") {
+    completed_data <- completed_data[completed_data$Surface == "Clay", ]
+  } else if (K == "Surface_Grass") {
+    completed_data <- completed_data[completed_data$Surface == "Grass", ]
   }
 
-  else if (K == "Surface_Hard") {
-    filtered_data <- filtered_data[filtered_data$Surface == "Hard", ]
+  # Calculate loss functions
+  loss_metrics <- data.frame(
+    Brier = mean((completed_data$Elo_pi_hat - completed_data$Outcome_P_i)^2, na.rm = TRUE),
+    LogLoss = mean(-log(pmax(completed_data$Elo_pi_hat, 1e-15)), na.rm = TRUE),
+    stringsAsFactors = FALSE
+  )
+  rownames(loss_metrics) <- "Elo"
+
+  if (WELO && nrow(completed_data) > 0) {
+    welo_loss <- data.frame(
+      Brier = mean((completed_data$WElo_pi_hat - completed_data$Outcome_P_i)^2, na.rm = TRUE),
+      LogLoss = mean(-log(pmax(completed_data$WElo_pi_hat, 1e-15)), na.rm = TRUE),
+      stringsAsFactors = FALSE
+    )
+    rownames(welo_loss) <- "WElo"
+    loss_metrics <- rbind(welo_loss, loss_metrics)
   }
 
-  else if (K == "Surface_Clay") {
-    filtered_data <- filtered_data[filtered_data$Surface == "Clay", ]
+  # 🏆 Find highest ratings
+  max_elo_idx <- which.max(final_data$Elo_i_after_match)
+  highest_elo_info <- list(
+    player = final_data$P_i[max_elo_idx],
+    rating = final_data$Elo_i_after_match[max_elo_idx],
+    date = final_data$Date[max_elo_idx]
+  )
+
+  highest_welo_info <- NULL
+  if (WELO) {
+    max_welo_idx <- which.max(final_data$WElo_i_after_match)
+    highest_welo_info <- list(
+      player = final_data$P_i[max_welo_idx],
+      rating = final_data$WElo_i_after_match[max_welo_idx],
+      date = final_data$Date[max_welo_idx]
+    )
   }
 
-  else if (K == "Surface_Grass") {
-    filtered_data <- filtered_data[filtered_data$Surface == "Grass", ]
+  # ⏱️ Final time
+  end_time <- Sys.time()
+  execution_time <- round(as.numeric(end_time - start_time), 3)
+
+  # 📊 Final statistics
+  if (verbose) {
+    cat("\n")
+    cat("✅ ELO CALCULATION COMPLETED\n")
+    cat("═══════════════════════════\n")
+    cat("⏱️  Execution time:  ", execution_time, "seconds\n")
+    cat("🎾 Unique players:   ", length(players_elo), "\n")
+    cat("📈 Processed matches:", format(total_matches, big.mark = "."), "\n")
+    cat("✅ Evaluated matches:", format(nrow(completed_data), big.mark = "."), "\n")
+    cat("📊 Period:           ", as.character(min(final_data$Date)), "→",
+        as.character(max(final_data$Date)), "\n")
+    cat("🏆 Highest ELO:      ", highest_elo_info$player, "(",
+        round(highest_elo_info$rating), ") on", highest_elo_info$date, "\n")
+
+    if (WELO) {
+      cat("🏆 Highest WELO:     ", highest_welo_info$player, "(",
+          round(highest_welo_info$rating), ") on", highest_welo_info$date, "\n")
+    }
+
+    cat("\n📈 PERFORMANCE METRICS:\n")
+    print(round(loss_metrics, 4))
+    cat("\n")
   }
 
-  else {
-    filtered_data <- filtered_data
-  }
-
-
-  loss_e <- cbind(
-    mean((filtered_data$Elo_pi_hat - filtered_data$Outcome_P_i)^2),
-    mean(-log(filtered_data$Elo_pi_hat)))
-
-  #prima avevo fatto il Brier cosi: ( mi sa è sbagliat)
-  #ifelse(x_sub$Elo_i_before_match > x_sub$Elo_j_before_match, 1 - x_sub$Elo_pi_hat, x_sub$Elo_pi_hat))^2)
-
-  if(WELO) {
-    loss_w <- cbind(
-      mean((filtered_data$WElo_pi_hat - filtered_data$Outcome_P_i)^2),
-      mean(-log(filtered_data$WElo_pi_hat)))
-    loss <- rbind(loss_w, loss_e)
-  }
-
-  else
-    loss <- loss_e
-
-  colnames(loss) <- c("Brier", "Log-Loss")
+  # 📦 Create result object
+  result <- list(
+    results = final_data,
+    matches = paste("Number of matches:", total_matches),
+    period = paste("From", min(final_data$Date), "to", max(final_data$Date)),
+    loss = loss_metrics,
+    highest_elo = paste("The player with the highest Elo rate, reached on",
+                        highest_elo_info$date, "is:", highest_elo_info$player),
+    dataset = x,
+    execution_time = execution_time,
+    players_count = length(players_elo),
+    final_ratings = list(elo = players_elo, welo = if(WELO) players_welo else NULL)
+  )
 
   if (WELO) {
-    rownames(loss) <- c("WElo", "Elo")
-  }
-  else {
-    rownames(loss) <- ("Elo")
+    result$highest_welo <- paste("The player with the highest WElo rate, reached on",
+                                 highest_welo_info$date, "is:", highest_welo_info$player)
   }
 
-  #loss <- round(loss, 4)
+  class(result) <- c("welo", "list")
 
-
-
-  res <- list(results = x_sub, matches = paste("Number of matches:", nrow(x), sep = " "),
-              period = paste("From", x_sub$Date[1], "to",	x_sub$Date[nrow(x_sub)], sep = " "),
-              loss = loss,
-              highest_elo = paste("The player with the highest Elo rate, reached on", x_sub$Date[which.max(x_sub$Elo_i_after_match)], "is:", x_sub$P_i[which.max(x_sub$Elo_i_after_match)], sep = " "))
-
-  if(WELO)
-    res$highest_welo = paste("The player with the highest WElo rate, reached on", x_sub$Date[which.max(x_sub$WElo_i_after_match)], "is:", x_sub$P_i[which.max(x_sub$WElo_i_after_match)], sep = " ")
-
-  res$dataset = x
-
-  cat(utils::capture.output(res$loss), sep = "\n")
-  class(res) <- c("welo")
-  end <- Sys.time()
-  cat("welofit2() took", round(end-start, 2), "seconds to run\n")
-
-  return(res)
+  return(result)
 }
 
 
@@ -1851,4 +2090,90 @@ simulate_tournament <- function(X, sim =  10000, WELO = FALSE) {
   }
 }
 
+
+
+
+#################plot
+plot_player_elo <- function(player_name, tables, start_date = NULL, end_date = NULL) {
+
+  # Initialize an empty list to store xts time series objects for each table
+  ts_list <- list()
+  surface_names <- c()  # Keep track of valid surface names
+
+  # Convert start_date and end_date to Date format if provided
+  if (!is.null(start_date)) {
+    start_date <- as.Date(start_date, format = "%Y-%m-%d")
+  }
+  if (!is.null(end_date)) {
+    end_date <- as.Date(end_date, format = "%Y-%m-%d")
+  }
+
+  # Loop over each table type in the input list
+  for (i in 1:length(tables)) {
+    # Extract current table and filter it for the chosen player
+    table <- tables[[i]]
+    player_data <- table[table$P_i == player_name | table$P_j == player_name, ]
+
+    # Check if the filtered data has any rows
+    if (nrow(player_data) > 0) {
+
+      # Select relevant columns
+      player_data <- player_data[, c("Date", "P_i", "P_j", "Elo_i_after_match", "Elo_j_after_match")]
+
+      # Create a new column for the player's Elo after the match
+      player_data$elo_player <- ifelse(player_data$P_i == player_name,
+                                       player_data$Elo_i_after_match,
+                                       ifelse(player_data$P_j == player_name,
+                                              player_data$Elo_j_after_match,
+                                              NA))
+
+      # Convert the "Date" column to Date format
+      player_data$Date <- as.Date(player_data$Date, format = "%Y-%m-%d")
+
+      # Filter the data based on start_date and end_date if provided
+      if (!is.null(start_date)) {
+        player_data <- player_data[player_data$Date >= start_date, ]
+      }
+      if (!is.null(end_date)) {
+        player_data <- player_data[player_data$Date <= end_date, ]
+      }
+
+      # Create an xts object for the Elo time series
+      player_ts <- xts(player_data$elo_player, order.by = player_data$Date)
+
+      # Add the time series to the list if it's not empty
+      if (nrow(player_ts) > 0) {
+        ts_list[[i]] <- player_ts
+        surface_names <- c(surface_names, names(tables)[i])  # Save the surface name
+      }
+    }
+  }
+
+  # Check if we have valid time series to combine
+  if (length(ts_list) > 0) {
+    # Combine all the individual time series into one xts object
+    combined_ts <- do.call(cbind, ts_list)
+
+    # Change column names to indicate surface type
+    colnames(combined_ts) <- surface_names
+
+    # Plot combined time series with appropriate labels and settings
+    plot.xts(combined_ts,
+             col = c("blue", "green", "brown", "purple")[1:length(ts_list)],
+             lwd = 2,
+             type = "l",
+             major.ticks = NULL,
+             grid.ticks.on = "years",
+             legend.loc = "bottomright",
+             ylab = "Elo Rating",
+             xlab = "Date",
+             #main = paste(player_name, "Elo Ratings Over Time"),
+             main = NULL,
+             main.timespan = FALSE
+    )
+  } else {
+    # If no valid time series, print a message
+    cat("No valid data found for player", player_name, "in the specified date range\n")
+  }
+}
 

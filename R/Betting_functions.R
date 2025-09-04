@@ -83,6 +83,7 @@ GS_sim <- function(X, tournament= NA, n = 1000, WELO = FALSE) {
   #Scelgo i tornei da inserire nella routine di betting con le loro start date
 
   if(tournament == "Australian Open" || is.na(tournament)){
+    tournament_datas <- rbind(tournament_datas, c("2025-01-12", "Australian Open 2025"))
     tournament_datas <- rbind(tournament_datas, c("2024-01-14", "Australian Open 2024"))
     tournament_datas <- rbind(tournament_datas, c("2023-01-16", "Australian Open 2023"))
     tournament_datas <- rbind(tournament_datas, c("2022-01-17", "Australian Open 2022"))
@@ -92,6 +93,7 @@ GS_sim <- function(X, tournament= NA, n = 1000, WELO = FALSE) {
   }
 
   if(tournament == "Roland Garros" || is.na(tournament)){
+    tournament_datas <- rbind(tournament_datas, c("2025-05-25", "Roland Garros 2025"))
     tournament_datas <- rbind(tournament_datas, c("2024-05-26", "Roland Garros 2024"))
     tournament_datas <- rbind(tournament_datas, c("2023-05-28", "Roland Garros 2023"))
     tournament_datas <- rbind(tournament_datas, c("2022-05-22", "Roland Garros 2022"))
@@ -112,6 +114,7 @@ GS_sim <- function(X, tournament= NA, n = 1000, WELO = FALSE) {
   }
 
   if(tournament == "Wimbledon" || is.na(tournament)){
+    tournament_datas <- rbind(tournament_datas, c("2025-06-30", "Wimbledon 2025"))
     tournament_datas <- rbind(tournament_datas, c("2024-07-01", "Wimbledon 2024"))
     tournament_datas <- rbind(tournament_datas, c("2023-07-03", "Wimbledon 2023"))
     tournament_datas <- rbind(tournament_datas, c("2022-06-27", "Wimbledon 2022"))
@@ -204,7 +207,8 @@ Estract_book <- function(Nome_Excel, tournament=NA) {
 ##############
 
 
-Place_bet <- function(probab, book, Q_values, R_values, Q_max = 1000, R_max = 1000) {
+Place_bet <- function(probab, book, Q_values = c(0.02, 0.05, 0.10, 0.15, 0.2),
+                      R_values = c(1.05, 1.1, 1.20, 1.4, 1.6, 1.8), Q_max = 1000, R_max = 1000) {
 
   if (length(probab) == length(book)) {
     Bet_results <- list()

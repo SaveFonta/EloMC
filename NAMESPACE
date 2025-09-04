@@ -9,6 +9,7 @@ export(simulate_tournament)
 export(compute_elo)
 export(merged_tennis_data)
 export(clean_data)
+export(plot_player_elo)
 
 
 # Importing required packages
@@ -17,3 +18,5 @@ import(Rlab)  # If Rlab is a package you depend on
 import(welo)  # If welo is a package you depend on
 import(progress)
 import(readxl)
+import(xts)
+import(zoo)
