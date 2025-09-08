@@ -1,50 +1,76 @@
 \name{clean_data}
 \alias{clean_data}
-\title{Clean and Preprocess Tennis Match Data for Elo Rating Computation}
+\title{Clean and Preprocess Tennis Match Data for Elo and WElo Rating Computation}
 \description{
-The \code{clean_data} function processes a data frame of tennis match data by removing rows with missing values and renaming specific columns as necessary. This preparation is essential for using the \code{\link{compute_elo}} function, which computes Elo ratings for all players involved. When \code{WELO = TRUE}, the function also calculates statistics needed for estimating the WElo rating as proposed by Angelini et al. (2022).
+The \code{clean_data} function prepares a tennis match dataset for Elo or WElo rating analysis.
+It validates input data, removes rows with missing essential values, standardizes column names,
+and optionally calculates additional match dominance statistics for WElo ratings.
+This ensures compatibility with \code{\link{compute_elo}} and related functions.
 }
 \usage{
-clean_data(x, WELO = FALSE)
+clean_data(x, WELO = FALSE, verbose = TRUE, add_id = FALSE)
 }
 \arguments{
   \item{x}{
-A data frame obtained using the function \code{\link{merged_tennis_data}}, containing tennis match data. The data frame must include the following columns: \code{Location}, \code{Tournament}, \code{Date}, \code{Series}, \code{Surface}, \code{Round}, \code{Winner}, and \code{Loser}. If any of these required columns are missing, the function will halt and return an error message.
+A \code{data.frame} containing tennis match data, typically obtained using \code{\link{merged_tennis_data}}.
+Must include the following columns: \code{Location}, \code{Tournament}, \code{Date}, \code{Series},
+\code{Surface}, \code{Round}, \code{Winner}, \code{Loser}, and \code{Comment}.
+Depending on the dataset, one of \code{ATP} or \code{WTA} must also be present.
+If any required columns are missing, the function stops with an error.
 }
   \item{WELO}{
-Logical; default is \code{FALSE}. If \code{TRUE}, the function calculates additional statistics on the fraction of games and sets won by both the winner and the loser, enabling estimation of the WElo rating, which factors in match dominance.
+Logical; default \code{FALSE}.
+If \code{TRUE}, the function computes match dominance statistics — fractions of games and sets won by both players —
+used for Weighted Elo (WElo) rating estimation (Angelini et al., 2022).
 }
+  \item{verbose}{
+Logical; default \code{TRUE}.
+If \code{TRUE}, the function prints detailed information, progress messages, and cleaning statistics to the console.
 }
-\value{
-A cleaned data frame ready for Elo rating computation using \code{\link{compute_elo}}. This data frame includes all necessary match information, with optional WElo rating variables when \code{WELO = TRUE}. If WElo statistics are calculated, they are added as new columns representing the fraction of games and sets won by the winner and loser, supporting WElo rating computation.
+  \item{add_id}{
+Logical; default \code{FALSE}.
+If \code{TRUE}, a unique identifier column \code{id} is added to the cleaned dataset.
+}
 }
 \details{
-The function follows these steps:
+The function performs the following steps:
 \enumerate{
-    \item \strong{Validation:} Checks that the input \code{x} is a data frame and verifies the presence of required columns.
-    \item \strong{Data Cleaning:} Removes any rows with missing values in the essential columns.
-    \item \strong{Column Renaming:} If a column named \code{Tier} exists, it is renamed to \code{Series} to standardize column names.
-    \item \strong{WElo Computation:} If \code{WELO = TRUE}, additional calculations are performed to add columns for the fraction of games and sets won by the winner and the loser. These statistics are necessary for WElo rating computation, based on the approach detailed by Angelini et al. (2022).
+    \item \strong{Validation:} Ensures the input is a non-empty \code{data.frame} with all required columns.
+    \item \strong{Column Renaming:} Renames \code{Tier} to \code{Series}, if present, to maintain consistency.
+    \item \strong{Row Removal:} Eliminates rows with missing values in essential columns, recording how many rows were removed and why.
+    \item \strong{WElo Statistics:} If \code{WELO = TRUE}, computes fractions of games and sets won by both winner and loser, provided the dataset contains set-level information (\code{W1–W5, L1–L5, Wsets, Lsets}).
+    \item \strong{Sorting and ID:} Orders matches by date and round, and optionally adds a match identifier column.
 }
-This function is designed to handle the output from \code{\link{merged_tennis_data}}, ensuring compatibility for Elo rating calculations with \code{\link{compute_elo}} and other related functions.
+This ensures the dataset is properly structured for Elo or WElo computation with \code{\link{compute_elo}}.
+}
+\value{
+A cleaned \code{data.frame} containing tennis match data, ready for Elo or WElo rating computation.
+If \code{WELO = TRUE}, additional columns are included:
+\itemize{
+  \item \code{f_g_Winner}, \code{f_g_Loser}: Fraction of games won by winner and loser.
+  \item \code{f_s_Winner}, \code{f_s_Loser}: Fraction of sets won by winner and loser.
+}
+If \code{add_id = TRUE}, an \code{id} column is added as the first column.
 }
 \references{
-Angelini, Giovanni, Vincenzo Candila, and Luca De Angelis. "Weighted Elo rating for tennis match predictions." \emph{European Journal of Operational Research} 297.1 (2022): 120-132. \cr
- \url{https://github.com/SaveFonta}
-
+Angelini, G., Candila, V., & De Angelis, L. (2022).
+\emph{Weighted Elo rating for tennis match predictions}.
+European Journal of Operational Research, 297(1), 120–132. \cr
+\url{https://github.com/SaveFonta}
 }
 \author{
 Saverio Fontana
 }
 \note{
-The function is crucial for preparing tennis match data for Elo and WElo rating computations. If any required columns are missing, the function will halt and display an error message.
+This function is a crucial preprocessing step for Elo and WElo analyses.
+If essential columns are missing, execution stops with an error.
 }
 \seealso{
 \code{\link{compute_elo}}, \cr
 \code{\link{merged_tennis_data}}
 }
 \examples{
-# Example usage:
+## Example dataset
 tennis_data <- data.frame(
   Location = c("Paris", "London"),
   Tournament = c("Roland Garros", "Wimbledon"),
@@ -53,12 +79,14 @@ tennis_data <- data.frame(
   Surface = c("Clay", "Grass"),
   Round = c("Final", "Final"),
   Winner = c("Player A", "Player B"),
-  Loser = c("Player C", "Player D")
+  Loser = c("Player C", "Player D"),
+  Comment = c("", "")
 )
 
-# Clean data with WElo statistics included
-cleaned_data <- clean_data(tennis_data, WELO = TRUE)
+## Clean data without WElo
+basic_cleaned <- clean_data(tennis_data)
 
-# cleaned_data now includes columns for Elo and WElo rating computation.
+## Clean data with WElo statistics and ID column
+advanced_cleaned <- clean_data(tennis_data, WELO = TRUE, add_id = TRUE)
 }
-\keyword{data}
+\keyword{datasets}

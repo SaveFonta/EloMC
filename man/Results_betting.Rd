@@ -2,7 +2,7 @@
 \alias{Results_betting}
 \title{Simulate Betting Results for Tennis Tournaments}
 \description{
-  This function simulates betting results for Grand Slam tournaments from 2019 to 2024 (with the last update for the "US Open 2024") based on the relationship between Elo-simulated winning probabilities and bookmaker odds. It retrieves tournament data, set up the ordered tables with \code{\link{define_tournament}} and after simulating the possible outcomes using \code{\link{simulate_tournament}}, calculates betting outcomes using the \code{\link{Betting_function}}. It then returns a summary of the results for each tournament. The betting strategy is better presented in the \code{\link{Betting_function}} documentation. \cr
+  This function simulates betting results for Grand Slam tournaments from 2019 to 2025 (with the last update for the "US Open 2024") based on the relationship between Elo-simulated winning probabilities and bookmaker odds. It retrieves tournament data, set up the ordered tables with \code{\link{define_tournament}} and after simulating the possible outcomes using \code{\link{simulate_tournament}}, calculates betting outcomes using the \code{\link{Betting_function}}. It then returns a summary of the results for each tournament. The betting strategy is better presented in the \code{\link{Betting_function}} documentation. \cr
   The results can be aggregated using the \code{\link{Results_balance}} function for a comprehensive overview of betting performance.
 }
 \usage{

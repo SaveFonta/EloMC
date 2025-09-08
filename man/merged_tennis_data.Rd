@@ -1,69 +1,75 @@
 \name{merged_tennis_data}
 \alias{merged_tennis_data}
-\title{Merge Tennis Match Data from Multiple Years}
+\title{Download and Merge Tennis Match Data Across Multiple Years}
 \description{
-  The \code{merged_tennis_data} function retrieves and merges ATP or WTA tennis match datasets from the years 2013 to 2024 based on the specified gender. The matches are downloaded from the archive of \url{www.tennis-data.co.uk} and involves match data for: ATP250, ATP500, ATP1000 and Grand Slams.
+  The \code{merged_tennis_data} function downloads and merges ATP or WTA tennis match datasets for a specified range of years.
+  The data comes from the archive of \url{https://www.tennis-data.co.uk} and includes tournaments at the \emph{ATP250, ATP500, ATP1000}, and \emph{Grand Slam} levels.
 }
 \usage{
-  merged_tennis_data(gender = "ATP")
+  merged_tennis_data(gender = "ATP", end_year = 2025, start_year = 2013)
 }
 \arguments{
   \item{gender}{
-    A character string indicating the gender of the tennis players.
-    It can be either \code{"ATP"} for male players or \code{"WTA"} for female players. The default value is \code{"ATP"}.
+    A character string specifying which circuit to download:
+    \code{"ATP"} for the men’s circuit (default) or \code{"WTA"} for the women’s circuit.
+  }
+  \item{end_year}{
+    An integer specifying the last year to include. Default: \code{2025}.
+  }
+  \item{start_year}{
+    An integer specifying the first year to include. Default: \code{2013}.
+    If less than 2007, a warning is issued because data may not be available.
   }
 }
 \details{
-  This function uses the \code{\link[welo]{tennis_data}} function from the \code{welo} package, authored by V. Candila, to load ATP or WTA tennis match datasets for each year from 2013 to 2024, depending on the specified gender. The data is combined into a single data frame, and unnecessary columns (e.g., \code{SJW}, \code{SJL}, \code{EXW}, \code{EXL}, \code{LBW}, \code{LBL}) are removed to prepare the data for further analysis.
+  This function relies on \code{\link[welo]{tennis_data}} from the \code{welo} package (V. Candila) to download yearly ATP/WTA datasets.
+  The data is merged into a single \code{data.frame}, and obsolete columns (e.g., \code{SJW}, \code{SJL}, \code{EXW}, \code{EXL}, \code{LBW}, \code{LBL}) are removed depending on the year.
 
-  The resulting data frame includes the following columns:
+  The resulting dataset may include the following variables:
   \itemize{
-    \item \strong{ATP/WTA}: The association of the tournament (either ATP for men or WTA for women).
-    \item \strong{Location}: The location of the tournament.
-    \item \strong{Tournament}: The name of the tournament.
-    \item \strong{Date}: The date of the match.
-    \item \strong{Series}: The category of the tournament.
-    \item \strong{Court}: The type of court.
-    \item \strong{Surface}: The surface type.
-    \item \strong{Round}: The round of the match.
-    \item \strong{Best of}: The best-of format of the match.
-    \item \strong{Winner}: The name of the winning player.
-    \item \strong{Loser}: The name of the losing player.
-    \item \strong{WRank}: The ranking of the winner.
-    \item \strong{LRank}: The ranking of the loser.
-    \item \strong{WPts}: Points awarded to the winner.
-    \item \strong{LPts}: Points awarded to the loser.
-    \item \strong{W1, L1, ..., W5, L5}: Scores for each set of the match.
-    \item \strong{Wsets}: Total sets won by the winner.
-    \item \strong{Lsets}: Total sets won by the loser.
-    \item \strong{Comment}: Additional comments regarding the match.
-    \item \strong{B365W, B365L}: Betting odds for the winner and loser from Bet365.
-    \item \strong{PSW, PSL}: Betting odds for the winner and loser from Pinnacle Sports.
-    \item \strong{MaxW, MaxL}: Maximum odds for the winner and loser.
-    \item \strong{AvgW, AvgL}: Average odds for the winner and loser.
+    \item \strong{ATP/WTA}: Circuit of the tournament.
+    \item \strong{Location}: Tournament location.
+    \item \strong{Tournament}: Tournament name.
+    \item \strong{Date}: Match date.
+    \item \strong{Series}: Tournament category.
+    \item \strong{Court}: Court type (indoor/outdoor).
+    \item \strong{Surface}: Surface type (hard, clay, grass, carpet).
+    \item \strong{Round}: Round of the match.
+    \item \strong{Best of}: Match format (3 or 5 sets).
+    \item \strong{Winner}, \strong{Loser}: Match winner and loser.
+    \item \strong{WRank}, \strong{LRank}: Player rankings.
+    \item \strong{WPts}, \strong{LPts}: Player points.
+    \item \strong{W1, L1, ..., W5, L5}: Set-by-set scores.
+    \item \strong{Wsets}, \strong{Lsets}: Number of sets won.
+    \item \strong{Comment}: Additional notes.
+    \item \strong{B365W}, \strong{B365L}: Bet365 odds.
+    \item \strong{PSW}, \strong{PSL}: Pinnacle odds.
+    \item \strong{MaxW}, \strong{MaxL}: Maximum available odds.
+    \item \strong{AvgW}, \strong{AvgL}: Average odds.
   }
 
-  It is important to note that the output data frame should be processed using the \code{\link{clean_data}} function from the \code{EloMC} package before performing any further analysis, such as computing Elo ratings. This function is optimized for preparing tennis match data for analysis and subsequent calculations.
+  Before further analysis (e.g., Elo rating computation), it is recommended to process the output using the \code{\link{clean_data}} function from the \code{EloMC} package.
 }
 \value{
-  A data frame containing the merged ATP or WTA tennis match data from 2013 to 2024, with specific columns removed.
+  A \code{data.frame} containing merged ATP or WTA tennis match data for the specified range of years, with obsolete columns removed.
 }
 \references{
- \url{https://github.com/SaveFonta}
+  \url{https://github.com/SaveFonta} \cr
+  \url{https://www.tennis-data.co.uk}
 }
 \author{
   Saverio Fontana
 }
 \note{
-  This function is essential for preparing tennis match data for analysis and computation of Elo ratings.
+  This function is intended as a data preparation step for tennis match analysis and Elo rating computation.
 }
 \seealso{
-  \code{\link[welo]{tennis_data}} \cr % Link to the tennis_data function in the welo package
-  \code{\link{clean_data}}  % Link to the clean_data function
+  \code{\link[welo]{tennis_data}} \cr
+  \code{\link{clean_data}}
 }
 \examples{
-  ## Example usage
-  tennis_data_merged <- merged_tennis_data(gender = "WTA")  # For women's tennis data
-  cleaned_data <- clean_data(tennis_data_merged)
+  ## Example: Download and clean WTA data from 2015 to 2020
+  wta_data <- merged_tennis_data(gender = "WTA", start_year = 2015, end_year = 2020)
+  wta_cleaned <- clean_data(wta_data)
 }
-\keyword{data}
+\keyword{datasets}
