@@ -149,8 +149,16 @@ GS_sim <- function(X, tournament= NA, n = 10000, WELO = FALSE) {
 
 ######
 
-Estract_book <- function(Nome_Excel, tournament=NA) {
-  tournament_datas <- data.frame(start_date = character(), sheet = character)
+Estract_book <- function(Nome_Excel, tournament = NA, input_path = input_dir) {
+  # Create the full file path
+  file_path <- file.path(input_path, Nome_Excel)
+
+  # Check if file exists
+  if (!file.exists(file_path)) {
+    stop(paste("File not found:", file_path))
+  }
+
+  tournament_datas <- data.frame(start_date = character(), sheet = character())
 
   if(tournament == "Australian Open" || is.na(tournament)){
     tournament_datas <- rbind(tournament_datas, c("2025-01-12", "Australian Open 2025"))
@@ -170,7 +178,6 @@ Estract_book <- function(Nome_Excel, tournament=NA) {
     tournament_datas <- rbind(tournament_datas, c("2021-05-30", "Roland Garros 2021"))
     tournament_datas <- rbind(tournament_datas, c("2020-09-27", "Roland Garros 2020"))
     tournament_datas <- rbind(tournament_datas, c("2019-05-26", "Roland Garros 2019"))
-
   }
 
   if(tournament == "US Open" || is.na(tournament)){
@@ -181,7 +188,6 @@ Estract_book <- function(Nome_Excel, tournament=NA) {
     tournament_datas <- rbind(tournament_datas, c("2021-08-30", "US Open 2021"))
     tournament_datas <- rbind(tournament_datas, c("2020-08-31", "US Open 2020"))
     tournament_datas <- rbind(tournament_datas, c("2019-08-26", "US Open 2019"))
-
   }
 
   if(tournament == "Wimbledon" || is.na(tournament)){
@@ -191,21 +197,22 @@ Estract_book <- function(Nome_Excel, tournament=NA) {
     tournament_datas <- rbind(tournament_datas, c("2022-06-27", "Wimbledon 2022"))
     tournament_datas <- rbind(tournament_datas, c("2021-06-28", "Wimbledon 2021"))
     tournament_datas <- rbind(tournament_datas, c("2019-07-01", "Wimbledon 2019"))
-
   }
 
   book_list <- list()
 
   for (i in 1:nrow(tournament_datas)) {
-    suppressMessages ({book <- read_excel(Nome_Excel, sheet = tournament_datas[i, 2])
-    colnames(book)[7] <- "Player"})
+    suppressMessages({
+      book <- read_excel(file_path, sheet = tournament_datas[i, 2])  # Use file_path here
+      colnames(book)[7] <- "Player"
+    })
     book_list[[tournament_datas[i, 2]]] <- book
     cat("Quote", tournament_datas[i, 2], "ottenute\n")
-
   }
 
   return(book_list)
 }
+
 
 ##############
 

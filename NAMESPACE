@@ -10,7 +10,8 @@ export(compute_elo)
 export(merged_tennis_data)
 export(clean_data)
 export(plot_player_elo)
-
+export(Estract_book)
+export(GS_sim)
 
 # Importing required packages
 
