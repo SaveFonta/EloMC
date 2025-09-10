@@ -1,23 +1,40 @@
-# NAMESPACE
+#### NAMESPACE for the EloMC package ####
 
-# Exporting functions
-export(Betting_function)
-export(Results_betting)
-export(Results_balance)
-export(define_tournament)
-export(simulate_tournament)
-export(compute_elo)
-export(merged_tennis_data)
-export(clean_data)
-export(plot_player_elo)
-export(Estract_book)
-export(GS_sim)
+# Exported functions
+# Queste sono le funzioni documentate nei tuoi file Rd che si prevede
+# siano disponibili per gli utenti che installano e usano il pacchetto.
+export(GS_sim)               # Simula i tornei del Grande Slam con Elo
+export(Estract_book)          # Estrae i dati delle quote dai file Excel
+export(Place_bet)             # Esegue strategie di betting sulle simulazioni
+export(Results_balance)       # Calcola il bilancio complessivo delle scommesse
+export(Results_betting)       # Riassume i risultati delle strategie di betting
+export(plot_player_elo)       # Visualizza l'andamento Elo dei giocatori
+export(define_tournament)     # Definisce la struttura di un torneo
+export(compute_elo)           # Calcola i punteggi Elo per i giocatori
+export(clean_data)            # Pulisce i dati grezzi delle partite
+export(simulate_tournament)   # Simula il percorso di un torneo
+export(Betting_function)      # Funzione di supporto per le strategie di betting
+export(merged_tennis_data)    # Dataset o funzione che unisce i dati di tennis
 
-# Importing required packages
+# Import of entire packages
+# Qui vengono importati pacchetti di uso ricorrente che supportano
+# funzioni di base del pacchetto.
+import(readxl)    # Necessario per leggere file Excel (funzione read_excel)
+import(stats)     # Funzioni statistiche di base (rnorm, runif, ecc.)
+import(utils)     # Funzioni di utilità come read.csv, head, ecc.
 
-import(Rlab)  # If Rlab is a package you depend on
-import(welo)  # If welo is a package you depend on
-import(progress)
-import(readxl)
-import(xts)
-import(zoo)
+# Import of specific functions from other packages
+# È preferibile, quando possibile, importare solo le funzioni necessarie
+# invece dell’intero pacchetto: questo rende il pacchetto più leggero.
+importFrom(dplyr, mutate)
+importFrom(dplyr, filter)
+importFrom(dplyr, select)
+importFrom(dplyr, arrange)
+importFrom(dplyr, rename)
+importFrom(dplyr, bind_rows)
+importFrom(dplyr, summarise)
+
+# È possibile aggiungere qui ulteriori import se usi altre funzioni specifiche
+# (ad esempio importFrom(ggplot2, ggplot) se usi grafici con ggplot2).
+
+#### End of NAMESPACE ####

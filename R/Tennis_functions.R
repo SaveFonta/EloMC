@@ -61,13 +61,15 @@ merged_tennis_data <- function(gender = "ATP", end_year = 2025, start_year = 201
     tryCatch({
       data_year <- suppressMessages(suppressWarnings(tennis_data(year, gender)))
 
-      # Remove specific columns based on year
+      # Remove specific columns based on year - AGGIUNTA LA CONDIZIONE PER IL 2025
       columns_to_remove <- c()
 
       if (as.numeric(year) <= 2014) {
         columns_to_remove <- c("SJW", "SJL", "EXW", "EXL", "LBW", "LBL")
       } else if (as.numeric(year) <= 2018) {
         columns_to_remove <- c("EXW", "EXL", "LBW", "LBL")
+      } else if (as.numeric(year) == 2025) {
+        columns_to_remove <- c("BFEW", "BFEL")
       }
 
       # Remove columns if they exist in the dataset
@@ -109,7 +111,6 @@ merged_tennis_data <- function(gender = "ATP", end_year = 2025, start_year = 201
 
   return(merged_data)
 }
-
 
 ############### FUNZIONE MIO CLEAN ################################################
 

@@ -8,7 +8,7 @@ Simulates all Grand Slam tennis tournaments from 2019 to 2025 using Elo-based pr
 It produces estimated probabilities of winning for each player and is designed for betting or predictive analysis.
 }
 \usage{
-GS_sim(X, tournament = NA, n = 1000, WELO = FALSE)
+GS_sim(X, tournament = NA, n = 10000, WELO = FALSE)
 }
 \arguments{
   \item{X}{

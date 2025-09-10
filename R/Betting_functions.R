@@ -7,6 +7,12 @@
 #Funzione fondamentale
 Betting_function <- function(X, Book, q_values, r_values, q_max = 1000, r_max = 1000) {
 
+  # Se esiste colonna "Resuslt" in Book, rinominala
+  if ("Resuslt" %in% names(Book)) {
+    names(Book)[names(Book) == "Resuslt"] <- "Result"
+    message("✅ Colonna 'Resuslt' rinominata in 'Result' nel book")
+  }
+
   # Trasformiamo probab in un df
   probab_df <- as.data.frame(X)
 
@@ -20,51 +26,48 @@ Betting_function <- function(X, Book, q_values, r_values, q_max = 1000, r_max = 
   merged_df <- merge(probab_df, Book, by = "Player")
 
   # Inizializza un dataframe per memorizzare i risultati
-  risultati_df <- data.frame(q_Value = numeric(0), r_Value = numeric(0), Balance = numeric(0), Players = character(0), Num_Bets = numeric(0), N_Bets_won = numeric(0))
+  risultati_df <- data.frame(q_Value = numeric(0), r_Value = numeric(0),
+                             Balance = numeric(0), Players = character(0),
+                             Num_Bets = numeric(0), N_Bets_won = numeric(0))
 
   # Itera su ogni valore di q
   for (q in q_values) {
-
     # Itera su ogni valore di r
     for (j in seq_along(r_values)) {
-
-      # Troviamo le righe dove la probabilità con ELO è maggiore di q e il rapporto è maggiore di r[j]
-      # All'inizio avevo messo merged_df$Prob_elo > q, ma in questo modo faceva piu bet... il ROI sembra piu alto come ho messo ora,
-      #inoltre nel paper era stato usato il q cosi
-      risultato <- merged_df[merged_df$Prob_bookmaker > q & merged_df$Prob_bookmaker <= q_max  & (merged_df$Prob_elo / merged_df$Prob_bookmaker) <= r_max & (merged_df$Prob_elo / merged_df$Prob_bookmaker) > r_values[j], ]
+      risultato <- merged_df[merged_df$Prob_bookmaker > q & merged_df$Prob_bookmaker <= q_max &
+                               (merged_df$Prob_elo / merged_df$Prob_bookmaker) <= r_max &
+                               (merged_df$Prob_elo / merged_df$Prob_bookmaker) > r_values[j], ]
       players_su_cui_betto <- as.character(risultato$Player)
 
       if (nrow(risultato) == 0) {
-        bilancio <- 0  # Nessuna partita trovata per questo valore di r
+        bilancio <- 0
         giocatori <- character(0)
         num_players <- 0
-        n_bets_won <- 0  # Nessuna bet vincente
-
+        n_bets_won <- 0
       } else {
         perdita <- 0
         guadagno <- 0
         giocatori <- character(0)
-        n_bets_won <- 0  # Contatore delle bet vincenti
-
-        # Vediamo se è un vincente o no:
+        n_bets_won <- 0
         for (i in 1:nrow(risultato)) {
           if (!is.na(risultato$Result[i]) && risultato$Result[i] == "WINNER") {
             guadagno <- (risultato$Quota[i] - 1)
             giocatori <- c(giocatori, players_su_cui_betto[i])
-            n_bets_won <- n_bets_won + 1  # Incrementa il contatore delle bet vincenti
-
+            n_bets_won <- n_bets_won + 1
           } else if (is.na(risultato$Result[i])) {
             perdita <- perdita + 1
             giocatori <- c(giocatori, players_su_cui_betto[i])
           }
         }
-
-        bilancio <- guadagno - perdita  # Calcola il bilancio per questo valore di r
-        num_players <- length(unique(players_su_cui_betto))  # Conta il numero di giocatori su cui si è scommesso
+        bilancio <- guadagno - perdita
+        num_players <- length(unique(players_su_cui_betto))
       }
 
-      # Aggiungi i risultati al dataframe
-      risultati_df <- rbind(risultati_df, data.frame(q_Value = q, r_Value = r_values[j], Balance = bilancio, Players = toString(giocatori), Num_Bets = num_players, N_Bets_won = n_bets_won))
+      risultati_df <- rbind(risultati_df, data.frame(
+        q_Value = q, r_Value = r_values[j], Balance = bilancio,
+        Players = toString(giocatori), Num_Bets = num_players,
+        N_Bets_won = n_bets_won
+      ))
     }
   }
 
@@ -217,24 +220,37 @@ Estract_book <- function(Nome_Excel, tournament = NA, input_path = input_dir) {
 ##############
 
 
-Place_bet <- function(probab, book, Q_values = c(0.02, 0.05, 0.10, 0.15, 0.2),
-                      R_values = c(1.05, 1.1, 1.20, 1.4, 1.6, 1.8), Q_max = 1000, R_max = 1000) {
+Place_bet <- function(probab, book,
+                      Q_values = c(0.02, 0.05, 0.10, 0.15, 0.2),
+                      R_values = c(1.05, 1.1, 1.20, 1.4, 1.6, 1.8),
+                      Q_max = 1000, R_max = 1000) {
 
-  if (length(probab) == length(book)) {
-    Bet_results <- list()
+  Bet_results <- list()
+  missing_tournaments <- c()
 
-    for (i in 1:length(book)) {
-      tournament_name <- names(book)[i]
-      Bet_results[[tournament_name]] <- Betting_function(probab[[i]], book[[i]], q_values = Q_values, r_values = R_values, q_max = Q_max, r_max = R_max)
-      cat("Torneo", tournament_name, "scommesso\n")
+  for (tournament_name in names(probab)) {
+    if (tournament_name %in% names(book)) {
+      Bet_results[[tournament_name]] <- Betting_function(
+        probab[[tournament_name]],
+        book[[tournament_name]],
+        q_values = Q_values,
+        r_values = R_values,
+        q_max = Q_max,
+        r_max = R_max
+      )
+      cat("✅ Torneo scommesso:", tournament_name, "\n")
+    } else {
+      missing_tournaments <- c(missing_tournaments, tournament_name)
+      warning("⚠️ Nessuna quota trovata per torneo: ", tournament_name)
     }
-
-    return (Bet_results)
   }
 
-  else {
-    print ("Error: Numero tornei simulati diverso da numero tornei quotati")
+  if (length(missing_tournaments) > 0) {
+    cat("\n📌 Tornei senza quote e quindi saltati:\n")
+    cat(paste0(" - ", missing_tournaments), sep = "\n")
   }
+
+  return(Bet_results)
 }
 
 
