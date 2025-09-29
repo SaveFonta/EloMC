@@ -78,73 +78,68 @@ Betting_function <- function(X, Book, q_values, r_values, q_max = 1000, r_max = 
 #Funzioni spezzettate:
 
 ##################
-GS_sim <- function(X, tournament= NA, n = 10000, WELO = FALSE) {
-
-  #Crea df
+GS_sim <- function (X, tournament = NA, n = 10000, WELO = FALSE,
+                    only_prob1 = TRUE)  # nuovo argomento
+{
   tournament_datas = data.frame(start_date = character(), sheet = character)
 
-  #Scelgo i tornei da inserire nella routine di betting con le loro start date
-
-  if(tournament == "Australian Open" || is.na(tournament)){
-    tournament_datas <- rbind(tournament_datas, c("2025-01-12", "Australian Open 2025"))
-    tournament_datas <- rbind(tournament_datas, c("2024-01-14", "Australian Open 2024"))
-    tournament_datas <- rbind(tournament_datas, c("2023-01-16", "Australian Open 2023"))
-    tournament_datas <- rbind(tournament_datas, c("2022-01-17", "Australian Open 2022"))
-    tournament_datas <- rbind(tournament_datas, c("2021-02-08", "Australian Open 2021"))
-    tournament_datas <- rbind(tournament_datas, c("2020-01-20", "Australian Open 2020"))
-    tournament_datas <- rbind(tournament_datas, c("2019-01-14", "Australian Open 2019"))
+  if (tournament == "Australian Open" || is.na(tournament)) {
+    tournament_datas <- rbind(tournament_datas, c("2025-01-12","Australian Open 2025"))
+    tournament_datas <- rbind(tournament_datas, c("2024-01-14","Australian Open 2024"))
+    tournament_datas <- rbind(tournament_datas, c("2023-01-16","Australian Open 2023"))
+    tournament_datas <- rbind(tournament_datas, c("2022-01-17","Australian Open 2022"))
+    tournament_datas <- rbind(tournament_datas, c("2021-02-08","Australian Open 2021"))
+    tournament_datas <- rbind(tournament_datas, c("2020-01-20","Australian Open 2020"))
+    tournament_datas <- rbind(tournament_datas, c("2019-01-14","Australian Open 2019"))
   }
-
-  if(tournament == "Roland Garros" || is.na(tournament)){
-    tournament_datas <- rbind(tournament_datas, c("2025-05-25", "Roland Garros 2025"))
-    tournament_datas <- rbind(tournament_datas, c("2024-05-26", "Roland Garros 2024"))
-    tournament_datas <- rbind(tournament_datas, c("2023-05-28", "Roland Garros 2023"))
-    tournament_datas <- rbind(tournament_datas, c("2022-05-22", "Roland Garros 2022"))
-    tournament_datas <- rbind(tournament_datas, c("2021-05-30", "Roland Garros 2021"))
-    tournament_datas <- rbind(tournament_datas, c("2020-09-27", "Roland Garros 2020"))
-    tournament_datas <- rbind(tournament_datas, c("2019-05-26", "Roland Garros 2019"))
-
+  if (tournament == "Roland Garros" || is.na(tournament)) {
+    tournament_datas <- rbind(tournament_datas, c("2025-05-25","Roland Garros 2025"))
+    tournament_datas <- rbind(tournament_datas, c("2024-05-26","Roland Garros 2024"))
+    tournament_datas <- rbind(tournament_datas, c("2023-05-28","Roland Garros 2023"))
+    tournament_datas <- rbind(tournament_datas, c("2022-05-22","Roland Garros 2022"))
+    tournament_datas <- rbind(tournament_datas, c("2021-05-30","Roland Garros 2021"))
+    tournament_datas <- rbind(tournament_datas, c("2020-09-27","Roland Garros 2020"))
+    tournament_datas <- rbind(tournament_datas, c("2019-05-26","Roland Garros 2019"))
   }
-
-  if(tournament == "US Open" || is.na(tournament)){
-    tournament_datas <- rbind(tournament_datas, c("2025-08-24", "US Open 2025"))
-    tournament_datas <- rbind(tournament_datas, c("2024-08-26", "US Open 2024"))
-    tournament_datas <- rbind(tournament_datas, c("2023-08-28", "US Open 2023"))
-    tournament_datas <- rbind(tournament_datas, c("2022-08-29", "US Open 2022"))
-    tournament_datas <- rbind(tournament_datas, c("2021-08-30", "US Open 2021"))
-    tournament_datas <- rbind(tournament_datas, c("2020-08-31", "US Open 2020"))
-    tournament_datas <- rbind(tournament_datas, c("2019-08-26", "US Open 2019"))
-
+  if (tournament == "US Open" || is.na(tournament)) {
+    tournament_datas <- rbind(tournament_datas, c("2025-08-24","US Open 2025"))
+    tournament_datas <- rbind(tournament_datas, c("2024-08-26","US Open 2024"))
+    tournament_datas <- rbind(tournament_datas, c("2023-08-28","US Open 2023"))
+    tournament_datas <- rbind(tournament_datas, c("2022-08-29","US Open 2022"))
+    tournament_datas <- rbind(tournament_datas, c("2021-08-30","US Open 2021"))
+    tournament_datas <- rbind(tournament_datas, c("2020-08-31","US Open 2020"))
+    tournament_datas <- rbind(tournament_datas, c("2019-08-26","US Open 2019"))
   }
-
-  if(tournament == "Wimbledon" || is.na(tournament)){
-    tournament_datas <- rbind(tournament_datas, c("2025-06-30", "Wimbledon 2025"))
-    tournament_datas <- rbind(tournament_datas, c("2024-07-01", "Wimbledon 2024"))
-    tournament_datas <- rbind(tournament_datas, c("2023-07-03", "Wimbledon 2023"))
-    tournament_datas <- rbind(tournament_datas, c("2022-06-27", "Wimbledon 2022"))
-    tournament_datas <- rbind(tournament_datas, c("2021-06-28", "Wimbledon 2021"))
-    tournament_datas <- rbind(tournament_datas, c("2019-07-01", "Wimbledon 2019"))
-
+  if (tournament == "Wimbledon" || is.na(tournament)) {
+    tournament_datas <- rbind(tournament_datas, c("2025-06-30","Wimbledon 2025"))
+    tournament_datas <- rbind(tournament_datas, c("2024-07-01","Wimbledon 2024"))
+    tournament_datas <- rbind(tournament_datas, c("2023-07-03","Wimbledon 2023"))
+    tournament_datas <- rbind(tournament_datas, c("2022-06-27","Wimbledon 2022"))
+    tournament_datas <- rbind(tournament_datas, c("2021-06-28","Wimbledon 2021"))
+    tournament_datas <- rbind(tournament_datas, c("2019-07-01","Wimbledon 2019"))
   }
 
   simulazioni <- list()
 
-  #Simuliamo ogni torneo:
-
   for (i in 1:nrow(tournament_datas)) {
     if (WELO) {
-      torneo <- define_tournament(X, start_date = tournament_datas[i, 1], Serie = "Grand Slam", WELO = TRUE)
+      torneo <- define_tournament(X, start_date = tournament_datas[i,1],
+                                  Serie = "Grand Slam", WELO = TRUE)
     } else {
-      torneo <- define_tournament(X, start_date = tournament_datas[i, 1], Serie = "Grand Slam", WELO = FALSE)
+      torneo <- define_tournament(X, start_date = tournament_datas[i,1],
+                                  Serie = "Grand Slam", WELO = FALSE)
     }
+
     sessantaquattresimi <- torneo$sessantaquattresimi_ord
     risultati <- simulate_tournament(sessantaquattresimi, n)
-    probab <- risultati$prob.1
 
-    #lista di liste (stile dictionary di phyton)
-    #Creiamo un elem nella lista "simulaz" dove il nome è il nome del torneo, ed il valore è la lista delle prob del torneo
-    simulazioni[tournament_datas[i, 2]] <- list(probab)
-    cat("Torneo", tournament_datas[i, 2], "completato\n")
+    if (only_prob1) {
+      simulazioni[[tournament_datas[i,2]]] <- list(risultati$prob.1)
+    } else {
+      simulazioni[[tournament_datas[i,2]]] <- list(risultati) # tutte le probabilità
+    }
+
+    cat("Torneo", tournament_datas[i,2], "completato\n")
   }
 
   return(simulazioni)
