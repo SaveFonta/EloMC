@@ -4,7 +4,7 @@
 
 #merge
 
-merged_tennis_data <- function(gender = "ATP", end_year = 2025, start_year = 2013) {
+merged_tennis_data <- function(gender = "ATP", end_year = 2026, start_year = 2013) {
 
   # Input validation
   if (!gender %in% c("ATP", "WTA")) {
@@ -64,11 +64,13 @@ merged_tennis_data <- function(gender = "ATP", end_year = 2025, start_year = 201
       # Remove specific columns based on year - AGGIUNTA LA CONDIZIONE PER IL 2025
       columns_to_remove <- c()
 
-      if (as.numeric(year) <= 2014) {
+      year_num <- as.numeric(year)
+
+      if (year_num <= 2014) {
         columns_to_remove <- c("SJW", "SJL", "EXW", "EXL", "LBW", "LBL")
-      } else if (as.numeric(year) <= 2018) {
+      } else if (year_num <= 2018) {
         columns_to_remove <- c("EXW", "EXL", "LBW", "LBL")
-      } else if (as.numeric(year) == 2025) {
+      } else if (year_num %in% c(2025,2026)) {
         columns_to_remove <- c("BFEW", "BFEL")
       }
 
@@ -2095,86 +2097,125 @@ simulate_tournament <- function(X, sim =  10000, WELO = FALSE) {
 
 
 #################plot
-plot_player_elo <- function(player_name, tables, start_date = NULL, end_date = NULL) {
+plot_player_elo <- function(player_names, tables, start_date = NULL, end_date = NULL) {
+  if (is.character(player_names)) player_names <- as.vector(player_names)
 
-  # Initialize an empty list to store xts time series objects for each table
+  if (!is.null(start_date)) start_date <- as.Date(start_date, format = "%Y-%m-%d")
+  if (!is.null(end_date))   end_date   <- as.Date(end_date,   format = "%Y-%m-%d")
+
   ts_list <- list()
-  surface_names <- c()  # Keep track of valid surface names
+  surface_names <- c()
 
-  # Convert start_date and end_date to Date format if provided
-  if (!is.null(start_date)) {
-    start_date <- as.Date(start_date, format = "%Y-%m-%d")
-  }
-  if (!is.null(end_date)) {
-    end_date <- as.Date(end_date, format = "%Y-%m-%d")
-  }
+  # -------------------------
+  # CASO 1: un solo giocatore
+  # -------------------------
+  if (length(player_names) == 1) {
+    player_name <- player_names[1]
 
-  # Loop over each table type in the input list
-  for (i in 1:length(tables)) {
-    # Extract current table and filter it for the chosen player
-    table <- tables[[i]]
-    player_data <- table[table$P_i == player_name | table$P_j == player_name, ]
+    for (i in seq_along(tables)) {
+      table <- tables[[i]]
+      player_data <- table[table$P_i == player_name | table$P_j == player_name, ]
 
-    # Check if the filtered data has any rows
-    if (nrow(player_data) > 0) {
+      if (nrow(player_data) > 0) {
+        player_data <- player_data[, c("Date", "P_i", "P_j",
+                                       "Elo_i_after_match", "Elo_j_after_match")]
+        player_data$elo_player <- ifelse(player_data$P_i == player_name,
+                                         player_data$Elo_i_after_match,
+                                         ifelse(player_data$P_j == player_name,
+                                                player_data$Elo_j_after_match, NA))
+        player_data$Date <- as.Date(player_data$Date, format = "%Y-%m-%d")
 
-      # Select relevant columns
-      player_data <- player_data[, c("Date", "P_i", "P_j", "Elo_i_after_match", "Elo_j_after_match")]
+        # filtra intervallo
+        if (!is.null(start_date)) player_data <- player_data[player_data$Date >= start_date, ]
+        if (!is.null(end_date))   player_data <- player_data[player_data$Date <= end_date, ]
 
-      # Create a new column for the player's Elo after the match
-      player_data$elo_player <- ifelse(player_data$P_i == player_name,
-                                       player_data$Elo_i_after_match,
-                                       ifelse(player_data$P_j == player_name,
-                                              player_data$Elo_j_after_match,
-                                              NA))
+        player_ts <- xts::xts(player_data$elo_player, order.by = player_data$Date)
 
-      # Convert the "Date" column to Date format
-      player_data$Date <- as.Date(player_data$Date, format = "%Y-%m-%d")
-
-      # Filter the data based on start_date and end_date if provided
-      if (!is.null(start_date)) {
-        player_data <- player_data[player_data$Date >= start_date, ]
-      }
-      if (!is.null(end_date)) {
-        player_data <- player_data[player_data$Date <= end_date, ]
-      }
-
-      # Create an xts object for the Elo time series
-      player_ts <- xts(player_data$elo_player, order.by = player_data$Date)
-
-      # Add the time series to the list if it's not empty
-      if (nrow(player_ts) > 0) {
-        ts_list[[i]] <- player_ts
-        surface_names <- c(surface_names, names(tables)[i])  # Save the surface name
+        if (nrow(player_ts) > 0) {
+          # linea piatta a 1500 da start_date fino al primo match
+          if (!is.null(start_date) && min(index(player_ts)) > start_date) {
+            first_match_date <- min(index(player_ts))
+            filler_dates <- seq(start_date, first_match_date - 1, by = "day")
+            if (length(filler_dates) > 0) {
+              filler_ts <- xts::xts(rep(1500, length(filler_dates)), order.by = filler_dates)
+              player_ts <- rbind(filler_ts, player_ts)
+            }
+          }
+          ts_list[[length(ts_list) + 1]] <- player_ts
+          surface_names <- c(surface_names, names(tables)[i])  # solo superficie
+        }
       }
     }
   }
 
-  # Check if we have valid time series to combine
-  if (length(ts_list) > 0) {
-    # Combine all the individual time series into one xts object
-    combined_ts <- do.call(cbind, ts_list)
+  # -------------------------
+  # CASO 2: più giocatori (una sola tabella)
+  # -------------------------
+  if (length(player_names) > 1) {
+    table <- tables  # qui è UNA tabella
 
-    # Change column names to indicate surface type
+    for (player_name in player_names) {
+      player_data <- table[table$P_i == player_name | table$P_j == player_name, ]
+
+      if (nrow(player_data) > 0) {
+        player_data <- player_data[, c("Date", "P_i", "P_j",
+                                       "Elo_i_after_match", "Elo_j_after_match")]
+        player_data$elo_player <- ifelse(player_data$P_i == player_name,
+                                         player_data$Elo_i_after_match,
+                                         ifelse(player_data$P_j == player_name,
+                                                player_data$Elo_j_after_match, NA))
+        player_data$Date <- as.Date(player_data$Date, format = "%Y-%m-%d")
+
+        # filtra intervallo
+        if (!is.null(start_date)) player_data <- player_data[player_data$Date >= start_date, ]
+        if (!is.null(end_date))   player_data <- player_data[player_data$Date <= end_date, ]
+
+        player_ts <- xts::xts(player_data$elo_player, order.by = player_data$Date)
+
+        if (nrow(player_ts) > 0) {
+          # linea piatta a 1500 da start_date fino al primo match
+          if (!is.null(start_date) && min(index(player_ts)) > start_date) {
+            first_match_date <- min(index(player_ts))
+            filler_dates <- seq(start_date, first_match_date - 1, by = "day")
+            if (length(filler_dates) > 0) {
+              filler_ts <- xts::xts(rep(1500, length(filler_dates)), order.by = filler_dates)
+              player_ts <- rbind(filler_ts, player_ts)
+            }
+          }
+          ts_list[[length(ts_list) + 1]] <- player_ts
+          surface_names <- c(surface_names, player_name)  # etichetta = nome
+        }
+      }
+    }
+  }
+
+  # -------------------------
+  # Plot comune
+  # -------------------------
+  if (length(ts_list) > 0) {
+    # merge per caso 2 (più giocatori), cbind per caso 1
+    if (length(player_names) == 1) {
+      combined_ts <- do.call(cbind, ts_list)
+    } else {
+      combined_ts <- do.call(merge, ts_list)
+      combined_ts <- zoo::na.locf(combined_ts, na.rm = FALSE)  # mantiene rating piatto
+    }
+
     colnames(combined_ts) <- surface_names
 
-    # Plot combined time series with appropriate labels and settings
     plot.xts(combined_ts,
-             col = c("blue", "green", "brown", "purple")[1:length(ts_list)],
-             lwd = 2,
-             type = "l",
-             major.ticks = NULL,
-             grid.ticks.on = "years",
+             col = c("blue", "green", "brown", "purple", "red")[1:length(ts_list)],
+             lwd = 2, type = "l",
+             major.ticks = NULL, grid.ticks.on = "years",
              legend.loc = "bottomright",
-             ylab = "Elo Rating",
-             xlab = "Date",
-             #main = paste(player_name, "Elo Ratings Over Time"),
+             ylab = "Elo Rating", xlab = "Date",
              main = NULL,
-             main.timespan = FALSE
+             main.timespan = FALSE,
+             yaxs = "i",
+             yaxis.right = FALSE
     )
   } else {
-    # If no valid time series, print a message
-    cat("No valid data found for player", player_name, "in the specified date range\n")
+    cat("No valid data found for", paste(player_names, collapse = ", "),
+        "in the specified date range\n")
   }
 }
-
